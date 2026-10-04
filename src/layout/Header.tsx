@@ -22,7 +22,7 @@ export const Header = () => {
 
   return (
     <StyleHeader>
-      <StyleHeaderContainer className="container">
+      <StyleHeaderContainer>
         <Button onClick={() => setOpen(!open)} sx={{ display: isMobile ? 'flex' : 'none' }}>
           <MenuIcon sx={{ color: 'var(--white)' }}></MenuIcon>
         </Button>

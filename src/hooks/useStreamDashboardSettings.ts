@@ -93,7 +93,6 @@ export const useStreamDashboardSettings = (channelNickname: string, mode: 'own' 
         categoryId: patch.categoryId ?? settings.categoryId ?? undefined,
         tags: patch.tags ?? settings.tags,
         language: patch.language ?? settings.language,
-        announcement: patch.announcement ?? settings.announcement,
       });
 
       setIsSaving(false);

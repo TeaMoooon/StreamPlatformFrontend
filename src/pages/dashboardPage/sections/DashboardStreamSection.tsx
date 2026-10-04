@@ -49,7 +49,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
   const [streamName, setStreamName] = useState('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
   const [language, setLanguage] = useState('ru');
-  const [announcement, setAnnouncement] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -80,7 +79,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
     setStreamName(settings.streamName);
     setCategoryId(settings.categoryId ?? '');
     setLanguage(settings.language || 'ru');
-    setAnnouncement(settings.announcement);
     setTags(settings.tags);
   }, [settings]);
 
@@ -114,7 +112,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
       streamName: streamName.trim(),
       categoryId: categoryId === '' ? null : Number(categoryId),
       language,
-      announcement: announcement.trim(),
       tags,
     });
 
@@ -166,15 +163,24 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
         />
       )}
 
-      {mode === 'own' && <DashboardIngestPanel />}
+      {mode === 'own' && (
+        <DashboardIngestPanel
+          streamKey={ingest.streamKey}
+          rtmpUrl={ingest.rtmpUrl}
+          showKey={ingest.showKey}
+          setShowKey={ingest.setShowKey}
+          isError={ingest.isError}
+          isLoading={ingest.isLoading}
+          streamingBlocked={ingest.streamingBlocked}
+          regenerateKey={ingest.regenerateKey}
+        />
+      )}
 
       <Box>
         <StyledDashboardSectionTitle>Настройки эфира</StyledDashboardSectionTitle>
-        <StyledDashboardSectionHint>
-          {mode === 'own'
-            ? 'Параметры текущего или следующего эфира.'
-            : `Параметры эфира канала ${channelNickname}. Ключ трансляции доступен только владельцу.`}
-        </StyledDashboardSectionHint>
+        {mode !== 'own' && (
+          <StyledDashboardSectionHint>Ключ трансляции есть только у владельца канала.</StyledDashboardSectionHint>
+        )}
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5, alignItems: 'center' }}>
           <Chip
@@ -263,7 +269,7 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
         <Box>
           <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)', mb: 1 }}>Теги</Typography>
           <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', mb: 1 }}>
-            Сохраняются в slug-формате и отображаются на странице стрима
+            Появятся на странице стрима
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1 }}>
             {tags.map((tag) => (
@@ -310,20 +316,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
             </MenuItem>
           ))}
         </TextField>
-
-        <TextField
-          label="Анонс / расписание"
-          fullWidth
-          multiline
-          minRows={3}
-          maxRows={6}
-          value={announcement}
-          onChange={(e) => setAnnouncement(e.target.value.slice(0, 500))}
-          placeholder="Следующий стрим — в субботу в 19:00..."
-          helperText={`${announcement.length} / 500`}
-          FormHelperTextProps={{ sx: { color: 'rgba(255,255,255,0.35)', textAlign: 'right' } }}
-          sx={fieldSx}
-        />
       </Box>
 
       <Box>

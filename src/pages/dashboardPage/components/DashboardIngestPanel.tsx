@@ -5,13 +5,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import CastOutlinedIcon from '@mui/icons-material/CastOutlined';
 import { useHeaderModal } from '../../../context/HeaderModalContext';
-import { useStreamIngest } from '../../../hooks/useStreamIngest';
-import {
-  settingsFieldSx,
-  settingsOutlinedButtonSx,
-  settingsPanelSx,
-  settingsPrimaryButtonSx,
-} from '../../settingsPage/settings.styles';
+import { settingsFieldSx, settingsOutlinedButtonSx, settingsPanelSx } from '../../settingsPage/settings.styles';
 
 const copyText = async (text: string) => {
   if (!text) return false;
@@ -23,11 +17,29 @@ const copyText = async (text: string) => {
   }
 };
 
+type DashboardIngestPanelProps = {
+  streamKey: string;
+  rtmpUrl: string;
+  showKey: boolean;
+  setShowKey: (value: boolean | ((prev: boolean) => boolean)) => void;
+  isError: string | null;
+  isLoading: boolean;
+  streamingBlocked: boolean;
+  regenerateKey: () => void;
+};
+
 /** OBS / RTMP credentials — only for channel owner. Never show to moderators. */
-export const DashboardIngestPanel = () => {
+export const DashboardIngestPanel = ({
+  streamKey,
+  rtmpUrl,
+  showKey,
+  setShowKey,
+  isError,
+  isLoading,
+  streamingBlocked,
+  regenerateKey,
+}: DashboardIngestPanelProps) => {
   const { showAlert } = useHeaderModal();
-  const { streamKey, rtmpUrl, showKey, setShowKey, isError, isLoading, regenerateKey, streamingBlocked } =
-    useStreamIngest(true);
   const [confirmReset, setConfirmReset] = useState(false);
 
   const handleCopy = async (label: string, value: string) => {
@@ -52,7 +64,7 @@ export const DashboardIngestPanel = () => {
         <Box>
           <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Подключение OBS</Typography>
           <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.4 }}>
-            Только для владельца канала. Модераторы не видят ключ и RTMP.
+            Ключ видите только вы.
           </Typography>
         </Box>
       </Box>

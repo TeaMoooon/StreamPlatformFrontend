@@ -38,7 +38,7 @@
   --gradient-sidebar-open: linear-gradient(135deg, #181138 0%, #3d2f8c 100%);
   --gradient-active-link: linear-gradient(90deg, rgba(109, 93, 251, 0.15) 0%, rgba(142, 123, 255, 0.05) 100%);
   --live-btn: #ff3b3b;
-  --layout-max-width: 1680px;
+  --layout-max-width: none;
   --layout-padding-x: 24px;
 }
 
@@ -123,9 +123,17 @@ img {
 }
 
 .container {
-  max-width: var(--layout-max-width);
+  width: 90%;
+  max-width: none;
   margin: 0 auto;
-  padding: 0 var(--layout-padding-x);
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    padding: 0 var(--layout-padding-x);
+  }
 }
 
 .hideCursor {

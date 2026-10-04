@@ -41,7 +41,7 @@ export const SettingsShell = ({ activeSection }: SettingsShellProps) => {
 
   return (
     <ContainerBox>
-      <StyledSettingsContainer sx={{ flexDirection: isMobile ? 'column' : 'row' }} className="container">
+      <StyledSettingsContainer sx={{ flexDirection: isMobile ? 'column' : 'row' }}>
         <StyledSettingsSidebar sx={{ maxWidth: isMobile ? '100%' : 320, pr: isMobile ? 0 : 3, mb: isMobile ? 2 : 0 }}>
           <StyledSettingsHero>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -49,7 +49,7 @@ export const SettingsShell = ({ activeSection }: SettingsShellProps) => {
               <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Настройки аккаунта</Typography>
             </Box>
             <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-              Профиль, безопасность и поддержка. Настройки эфира — в панели стрима.
+              Настройки эфира — в панели стрима.
             </Typography>
             {profile?.nickname && (
               <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', mt: 0.5 }}>

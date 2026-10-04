@@ -24,6 +24,25 @@ import { HeaderStreamPage } from './components/headerStreamPage/HeaderStreamPage
 import { StreamMetaPanel } from './components/streamMeta/StreamMetaPanel';
 import { StyledChatCollapseTab } from '../../components/chat/StyledChat';
 
+const CHAT_OPEN_STORAGE_KEY = 'stream-chat-open';
+
+const readStoredChatOpen = () => {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(CHAT_OPEN_STORAGE_KEY) !== '0';
+  } catch {
+    return true;
+  }
+};
+
+const writeStoredChatOpen = (open: boolean) => {
+  try {
+    window.localStorage.setItem(CHAT_OPEN_STORAGE_KEY, open ? '1' : '0');
+  } catch {
+    /* ignore quota / private mode */
+  }
+};
+
 export const StreamPage = ({
   streamInfo,
   viewerCount,
@@ -41,6 +60,7 @@ export const StreamPage = ({
   slowModeSeconds = 0,
   setSlowMode,
   chatRules = '',
+  chatRulesTitle = '',
   chatMode = 'normal',
   canSendChat = true,
   canManageChat = false,
@@ -62,6 +82,7 @@ export const StreamPage = ({
   slowModeSeconds?: number;
   setSlowMode?: (seconds: number) => void;
   chatRules?: string;
+  chatRulesTitle?: string;
   chatMode?: 'normal' | 'emote_only' | 'subscribers_only';
   canSendChat?: boolean;
   canManageChat?: boolean;
@@ -69,16 +90,24 @@ export const StreamPage = ({
 }) => {
   const { isMobile } = useDeviceDetect();
   const { data: profile } = useAppSelector((state) => state.user);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(readStoredChatOpen);
   const [playerFullscreen, setPlayerFullscreen] = useState(false);
   const [fsChatOpen, setFsChatOpen] = useState(false);
   const [videoBlockHeight, setVideoBlockHeight] = useState<number>();
   const fullscreenHostRef = useRef<HTMLDivElement>(null);
   const videoBlockRef = useRef<HTMLDivElement>(null);
 
+  // Mobile keeps the chat panel open; desktop remembers collapse across reloads.
+  const chatOpen = isMobile || isOpen;
+
   useEffect(() => {
     if (!playerFullscreen) setFsChatOpen(false);
   }, [playerFullscreen]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    writeStoredChatOpen(isOpen);
+  }, [isOpen, isMobile]);
 
   useEffect(() => {
     if (isMobile) {
@@ -90,22 +119,35 @@ export const StreamPage = ({
     if (!node) return;
 
     const updateHeight = () => {
-      setVideoBlockHeight(Math.round(node.getBoundingClientRect().height));
+      const next = Math.round(node.getBoundingClientRect().height);
+      if (next > 0) setVideoBlockHeight(next);
     };
+
+    // Drop stale height on toggle so a tall collapsed layout can't pin the row.
+    setVideoBlockHeight(undefined);
 
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(node);
     window.addEventListener('resize', updateHeight);
 
+    const rafId = window.requestAnimationFrame(() => {
+      updateHeight();
+      window.requestAnimationFrame(updateHeight);
+    });
+    const timeoutId = window.setTimeout(updateHeight, 32);
+
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', updateHeight);
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(timeoutId);
     };
-  }, [isMobile, isOpen, streamInfo?.hlsUrl]);
+  }, [isMobile, chatOpen, streamInfo?.hlsUrl]);
 
-  const videoContainerFlex = isMobile ? '0 0 auto' : isOpen ? '0 1 70%' : '0 1 100%';
-  const chatFlex = !isOpen ? '0 0 48px' : isMobile ? '0 0 auto' : '0 0 30%';
+  // Wider player when chat is collapsed; chat height follows the video block.
+  const videoContainerFlex = isMobile ? '0 0 auto' : chatOpen ? '0 1 70%' : '0 1 100%';
+  const chatFlex = !chatOpen ? '0 0 48px' : isMobile ? '0 0 auto' : '0 0 30%';
 
   const desktopChatHeight =
     !isMobile && videoBlockHeight
@@ -131,7 +173,10 @@ export const StreamPage = ({
             alignItems: isMobile ? 'stretch' : 'flex-start',
           }}
         >
-          <StyledStreamContainerVideoPlayer ref={videoBlockRef} sx={{ flex: videoContainerFlex, minHeight: 0 }}>
+          <StyledStreamContainerVideoPlayer
+            ref={videoBlockRef}
+            sx={{ flex: videoContainerFlex, minWidth: 0, minHeight: 0, overflow: 'hidden' }}
+          >
             <HeaderStreamPage streamInfo={streamInfo} viewerCount={viewerCount} />
             {showDelegatedManage && streamerNickname && (
               <Box sx={{ px: 1, pb: 1 }}>
@@ -162,10 +207,13 @@ export const StreamPage = ({
               sx={{
                 flex: '0 0 auto',
                 width: '100%',
+                minWidth: 0,
                 display: 'flex',
                 flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
                 overflow: 'hidden',
-                bgcolor: playerFullscreen ? '#000' : 'transparent',
+                bgcolor: '#000',
                 '&:fullscreen': {
                   width: '100%',
                   height: '100%',
@@ -189,8 +237,11 @@ export const StreamPage = ({
                   flex: playerFullscreen && fsChatOpen ? '1 1 72%' : '1 1 100%',
                   minWidth: 0,
                   minHeight: 0,
+                  width: '100%',
                   display: 'flex',
-                  transition: 'flex 0.3s ease',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: '#000',
                   height: playerFullscreen ? '100%' : undefined,
                 }}
               >
@@ -201,6 +252,7 @@ export const StreamPage = ({
                   variant="embedded"
                   streamer={streamer}
                   fillContainer={playerFullscreen}
+                  fitViewport={!playerFullscreen && !isMobile}
                   viewerCount={viewerCount}
                   fullscreenTargetRef={fullscreenHostRef}
                   onFullscreenChange={setPlayerFullscreen}
@@ -236,6 +288,7 @@ export const StreamPage = ({
                     slowModeSeconds={slowModeSeconds}
                     setSlowMode={setSlowMode}
                     chatRules={chatRules}
+                    chatRulesTitle={chatRulesTitle}
                     chatMode={chatMode}
                     canSendChat={canSendChat}
                     canManageChat={canManageChat}
@@ -246,7 +299,7 @@ export const StreamPage = ({
             </Box>
           </StyledStreamContainerVideoPlayer>
           <StyledStreamContainerChat sx={{ flex: chatFlex, minHeight: 0, ...desktopChatHeight }}>
-            {isOpen ? (
+            {chatOpen ? (
               <Chat
                 setIsOpen={setIsOpen}
                 messages={messages}
@@ -263,6 +316,7 @@ export const StreamPage = ({
                 slowModeSeconds={slowModeSeconds}
                 setSlowMode={setSlowMode}
                 chatRules={chatRules}
+                chatRulesTitle={chatRulesTitle}
                 chatMode={chatMode}
                 canSendChat={canSendChat}
                 canManageChat={canManageChat}

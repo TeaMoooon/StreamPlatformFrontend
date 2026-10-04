@@ -109,8 +109,7 @@ export const StaffTicketsSection = () => {
       <Box>
         <StyledDashboardSectionTitle>Вопросы в поддержку</StyledDashboardSectionTitle>
         <StyledDashboardSectionHint>
-          Обычные вопросы: ключ стрима, аккаунт, оплата. Баны тут не выдают — для этого раздел «Мут и бан». Открытые
-          дольше {STAFF_STALE_HOURS}ч подсвечены.
+          Баны здесь не выдают — для этого раздел «Мут и бан». Открытые дольше {STAFF_STALE_HOURS}ч подсвечены.
         </StyledDashboardSectionHint>
       </Box>
 
@@ -183,7 +182,7 @@ export const StaffTicketsSection = () => {
               <Chip size="small" label={active.status} sx={{ color: '#fff' }} />
               <Chip size="small" label={categoryLabel(active.category)} sx={{ color: '#fff' }} />
               {active.escalatedReportId && (
-                <Chip size="small" label={`Report #${active.escalatedReportId}`} sx={{ color: '#ffb74d' }} />
+                <Chip size="small" label={`Жалоба #${active.escalatedReportId}`} sx={{ color: '#ffb74d' }} />
               )}
             </Box>
             <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{active.subject}</Typography>

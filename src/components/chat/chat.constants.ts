@@ -48,7 +48,7 @@ export const CHAT_MODE_OPTIONS: ReadonlyArray<{
   hint: string;
 }> = [
   { value: 'normal', label: 'Обычный чат', hint: 'Все зрители могут писать текст' },
-  { value: 'emote_only', label: 'Только эмодзи', hint: 'Разрешены только эмодзи (моды и стример без ограничений)' },
+  { value: 'emote_only', label: 'Только эмодзи', hint: 'Зрители могут отправлять только эмодзи' },
   {
     value: 'subscribers_only',
     label: 'Только подписчики',

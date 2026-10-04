@@ -7,6 +7,7 @@ import { normalizeChatMode } from '../components/chat/chat.utils';
 export type StreamChatSettings = {
   slowModeSeconds: number;
   chatRules: string;
+  chatRulesTitle: string;
   chatMode: ChatMode;
 };
 
@@ -27,6 +28,7 @@ const apiBase = () => `${process.env.REACT_APP_API_LOCAL}/api/streamers`;
 const normalizeSettings = (raw: Record<string, unknown>): StreamChatSettings => ({
   slowModeSeconds: Number(raw.slowModeSeconds ?? raw.SlowModeSeconds ?? 0),
   chatRules: String(raw.chatRules ?? raw.ChatRules ?? ''),
+  chatRulesTitle: String(raw.chatRulesTitle ?? raw.ChatRulesTitle ?? ''),
   chatMode: normalizeChatMode(raw.chatMode ?? raw.ChatMode),
 });
 
@@ -70,6 +72,7 @@ export const updateStreamChatSettings = async (streamerId: number, payload: Part
     body: JSON.stringify({
       slowModeSeconds: payload.slowModeSeconds,
       chatRules: payload.chatRules,
+      chatRulesTitle: payload.chatRulesTitle,
       chatMode: payload.chatMode,
     }),
   });

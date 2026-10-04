@@ -99,7 +99,7 @@ export const DashboardTeamSection = ({ channelNickname, mode }: { channelNicknam
       <StyledDashboardSectionHint>
         {mode === 'own'
           ? 'Назначайте модераторов и ассистентов по никнейму.'
-          : `Управление командой канала ${channelNickname}. Модератор может назначать только ассистентов.`}
+          : 'Модератор может назначать только ассистентов.'}
       </StyledDashboardSectionHint>
 
       {availableRoles.length > 0 && (

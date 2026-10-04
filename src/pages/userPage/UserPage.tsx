@@ -31,6 +31,7 @@ export const UserPage: FC = appLayout(() => {
     slowModeSeconds,
     setSlowMode,
     chatRules,
+    chatRulesTitle,
     chatMode,
     canSendChat,
     canManageChat,
@@ -68,6 +69,7 @@ export const UserPage: FC = appLayout(() => {
             slowModeSeconds={slowModeSeconds}
             setSlowMode={setSlowMode}
             chatRules={chatRules}
+            chatRulesTitle={chatRulesTitle}
             chatMode={chatMode}
             canSendChat={canSendChat}
             canManageChat={canManageChat}

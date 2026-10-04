@@ -95,7 +95,7 @@ const StaffShell = ({ activeSection, permissions, role }: StaffShellProps) => {
 
   return (
     <ContainerBox>
-      <StyledDashboardContainer className="container">
+      <StyledDashboardContainer>
         <StyledDashboardSidebar>
           <StyledDashboardHero>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

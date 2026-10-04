@@ -7,7 +7,7 @@ export const StyledContainerStream = styled(Box)(() => ({
   height: 'auto',
   maxHeight: 'none',
   minHeight: 0,
-  transition: 'min-height 0.35s ease, max-height 0.35s ease, height 0.35s ease',
+  transition: 'none',
   '@media (max-width: 768px)': {
     minHeight: 'auto',
   },
@@ -41,7 +41,6 @@ export const StyledStreamContainerVideoPlayer = styled(Box)(() => ({
   zIndex: 1,
   backgroundColor: 'rgba(255,255,255,0.05)',
   backdropFilter: 'blur(16px)',
-  transition: 'flex 0.35s ease',
   '@media (max-width: 768px)': {
     height: 'auto',
     flex: '0 0 auto',
@@ -54,7 +53,6 @@ export const StyledStreamContainerChat = styled(Box)(() => ({
   minHeight: 0,
   minWidth: 0,
   overflow: 'hidden',
-  transition: 'flex 0.35s ease',
   borderRadius: '4px',
   '@media (max-width: 768px)': {
     height: 'min(50vh, 420px)',

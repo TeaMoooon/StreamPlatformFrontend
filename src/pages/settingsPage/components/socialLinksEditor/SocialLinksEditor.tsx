@@ -217,7 +217,7 @@ export const SocialLinksEditor = ({ arrayHelpers }: SocialLinksEditorProps) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
         <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.42)' }}>
-          До {MAX_SOCIAL_LINKS} ссылок · отображаются на странице канала
+          До {MAX_SOCIAL_LINKS} ссылок на странице канала
         </Typography>
         <Chip
           size="small"

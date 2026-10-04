@@ -18,12 +18,14 @@ export const ContainerBox = styled(Box)(() => ({
   display: 'flex',
   flexDirection: 'column',
   gap: '32px',
-  width: '100%',
-  maxWidth: 'var(--layout-max-width)',
+  width: '90%',
+  maxWidth: 'none',
   margin: '0 auto',
-  padding: `10px var(--layout-padding-x)`,
+  padding: `10px 0`,
   '@media (max-width: 768px)': {
     gap: '24px',
+    width: '100%',
+    padding: `10px var(--layout-padding-x)`,
   },
 }));
 

@@ -106,7 +106,7 @@ export const StaffUsersSection = ({ canManageStaffRoles, canModeratePlatform, ac
     setSelected(result.user);
     setRoleDraft(result.user.role);
     setUsers((prev) => prev.map((u) => (u.id === result.user.id ? { ...u, role: result.user.role } : u)));
-    setNotice('Роль обновлена. Пользователю нужен новый вход, чтобы права в токене обновились.');
+    setNotice('Роль обновлена. Пользователю нужно войти заново, чтобы права применились.');
   };
 
   const issueSanction = async () => {
@@ -148,10 +148,9 @@ export const StaffUsersSection = ({ canManageStaffRoles, canModeratePlatform, ac
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box>
         <StyledDashboardSectionTitle>Мут и бан</StyledDashboardSectionTitle>
-        <StyledDashboardSectionHint>
-          1) Найдите человека по нику или id → 2) Откройте карточку → 3) Выберите наказание и нажмите красную кнопку.
-          {!canModeratePlatform && ' Выдавать наказания могут только модераторы и админы.'}
-        </StyledDashboardSectionHint>
+        {!canModeratePlatform && (
+          <StyledDashboardSectionHint>Выдавать наказания могут только модераторы и админы.</StyledDashboardSectionHint>
+        )}
       </Box>
 
       <Box component="form" onSubmit={onSearch} sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

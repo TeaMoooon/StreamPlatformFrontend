@@ -90,7 +90,7 @@ export const DashboardStreamPreviewField = ({
       <Box>
         <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>Превью стрима</Typography>
         <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', mt: 0.5 }}>
-          Показывается на карточках эфира. После выбора можно указать область 16:9, до 5 MB.
+          Показывается на карточках эфира. Можно обрезать кадр, до 5 MB.
         </Typography>
       </Box>
 

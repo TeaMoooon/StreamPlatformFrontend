@@ -23,7 +23,7 @@ export const getStaffNavItems = (canModeratePlatform = true): StaffNavItem[] =>
     {
       value: 'reports' as const,
       title: 'Жалобы',
-      description: 'Сигналы о нарушениях с сайта',
+      description: 'Жалобы зрителей с сайта',
       path: '/staff/reports',
       requiresPlatformMod: true,
     },
@@ -37,7 +37,7 @@ export const getStaffNavItems = (canModeratePlatform = true): StaffNavItem[] =>
     {
       value: 'tickets' as const,
       title: 'Вопросы в поддержку',
-      description: 'Ключ, аккаунт, технические вопросы',
+      description: 'Вопросы пользователей',
       path: '/staff/tickets',
     },
     {

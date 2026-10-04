@@ -32,6 +32,7 @@ export const useChat = (hub: signalR.HubConnection | null, streamNickname?: stri
   const [chatError, setChatError] = useState<string | null>(null);
   const [slowModeSeconds, setSlowModeSeconds] = useState(0);
   const [chatRules, setChatRules] = useState('');
+  const [chatRulesTitle, setChatRulesTitle] = useState('');
   const [chatMode, setChatMode] = useState<ChatMode>('normal');
   const [canSendChat, setCanSendChat] = useState(true);
   const [canManageChat, setCanManageChat] = useState(false);
@@ -57,6 +58,7 @@ export const useChat = (hub: signalR.HubConnection | null, streamNickname?: stri
     setChatError(null);
     setSlowModeSeconds(0);
     setChatRules('');
+    setChatRulesTitle('');
     setChatMode('normal');
     setCanSendChat(true);
     setCanManageChat(false);
@@ -191,6 +193,11 @@ export const useChat = (hub: signalR.HubConnection | null, streamNickname?: stri
       const rules = data?.chatRules ?? data?.ChatRules;
       if (typeof rules === 'string') {
         setChatRules(rules);
+      }
+
+      const rulesTitle = data?.chatRulesTitle ?? data?.ChatRulesTitle;
+      if (typeof rulesTitle === 'string') {
+        setChatRulesTitle(rulesTitle);
       }
 
       const mode = data?.chatMode ?? data?.ChatMode;
@@ -518,6 +525,7 @@ export const useChat = (hub: signalR.HubConnection | null, streamNickname?: stri
     slowModeSeconds,
     setSlowMode,
     chatRules,
+    chatRulesTitle,
     chatMode,
     canSendChat,
     canManageChat,

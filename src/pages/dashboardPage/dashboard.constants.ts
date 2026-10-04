@@ -19,20 +19,20 @@ export const getDashboardNavItems = (basePath: string): DashboardNavItem[] => [
   {
     value: 'stream',
     title: 'Эфир',
-    description: 'Название, категория, теги',
+    description: 'Как выглядит эфир',
     path: `${basePath}/stream`,
   },
   {
     value: 'team',
     title: 'Команда',
-    description: 'Модераторы, ассистенты, баны',
+    description: 'Кто помогает вести канал',
     path: `${basePath}/team`,
     streamerOnly: true,
   },
   {
     value: 'chat',
     title: 'Чат',
-    description: 'Slow mode и правила',
+    description: 'Режим и правила',
     path: `${basePath}/chat`,
   },
 ];

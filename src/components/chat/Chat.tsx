@@ -13,6 +13,7 @@ import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
 import SendIcon from '@mui/icons-material/Send';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import {
@@ -35,6 +36,8 @@ import {
 } from './StyledChat';
 import { IChatMessage } from '../../types/share';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { ChatNoticeBanner } from './ChatNoticeBanner';
+import { isChatNoticePreferredVisible, setChatNoticePreferredVisible } from './chatNotice.utils';
 
 export const Chat = ({
   setIsOpen,
@@ -52,6 +55,7 @@ export const Chat = ({
   slowModeSeconds = 0,
   setSlowMode,
   chatRules = '',
+  chatRulesTitle = '',
   chatMode = 'normal',
   canSendChat = true,
   canManageChat = false,
@@ -73,6 +77,7 @@ export const Chat = ({
   slowModeSeconds?: number;
   setSlowMode?: (seconds: number) => void;
   chatRules?: string;
+  chatRulesTitle?: string;
   chatMode?: ChatMode;
   canSendChat?: boolean;
   canManageChat?: boolean;
@@ -91,6 +96,20 @@ export const Chat = ({
   const [showNewMessagesPill, setShowNewMessagesPill] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [replyTo, setReplyTo] = useState<{ userId: number; username: string } | null>(null);
+  const hasChatNotice = Boolean(chatRules.trim());
+  const [noticeVisible, setNoticeVisible] = useState(() => isChatNoticePreferredVisible(streamerId));
+
+  useEffect(() => {
+    setNoticeVisible(isChatNoticePreferredVisible(streamerId));
+  }, [streamerId]);
+
+  const toggleNoticeVisible = useCallback(() => {
+    setNoticeVisible((prev) => {
+      const next = !prev;
+      if (streamerId) setChatNoticePreferredVisible(streamerId, next);
+      return next;
+    });
+  }, [streamerId]);
 
   const updateInputExpanded = useCallback(() => {
     const el = textareaRef.current;
@@ -138,6 +157,26 @@ export const Chat = ({
       setShowNewMessagesPill(true);
     }
   }, [messages, scrollToBottom]);
+
+  // Chat height changes when the panel is toggled / video resizes — keep pinned to bottom.
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+
+    const stickToBottomIfNeeded = () => {
+      if (!isNearBottomRef.current) return;
+      el.scrollTop = el.scrollHeight;
+    };
+
+    stickToBottomIfNeeded();
+    const observer = new ResizeObserver(() => {
+      stickToBottomIfNeeded();
+    });
+    observer.observe(el);
+    if (el.parentElement) observer.observe(el.parentElement);
+
+    return () => observer.disconnect();
+  }, [messages.length === 0]);
 
   useEffect(() => {
     if (!chatError || !clearChatError) return;
@@ -286,29 +325,52 @@ export const Chat = ({
         </Box>
       </StyledChatHeader>
 
-      {chatRules.trim() && (
-        <Box
-          sx={{
-            px: 1.5,
-            py: 1,
-            mx: 1,
-            mt: 0.5,
-            borderRadius: 1.5,
-            bgcolor: 'rgba(142,123,255,0.1)',
-            border: '1px solid rgba(142,123,255,0.2)',
-            flexShrink: 0,
-          }}
-        >
-          <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#b8adff', mb: 0.5, letterSpacing: '0.04em' }}>
-            ПРАВИЛА ЧАТА
-          </Typography>
-          <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
-            {chatRules.trim()}
-          </Typography>
-        </Box>
-      )}
-
       <Box sx={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {hasChatNotice && (
+          <Box
+            component="button"
+            type="button"
+            onClick={toggleNoticeVisible}
+            aria-expanded={noticeVisible}
+            aria-label={noticeVisible ? 'Скрыть уведомление' : 'Показать уведомление'}
+            title={noticeVisible ? 'Скрыть уведомление' : 'Показать уведомление'}
+            sx={{
+              position: 'absolute',
+              top: 6,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 18,
+              m: 0,
+              p: 0,
+              borderRadius: 999,
+              border: '1px solid rgba(184, 173, 255, 0.55)',
+              bgcolor: 'rgba(22, 20, 36, 0.96)',
+              color: '#d8d0ff',
+              cursor: 'pointer',
+              lineHeight: 0,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.45)',
+              '&:hover': {
+                color: '#fff',
+                borderColor: 'rgba(184,173,255,0.85)',
+                bgcolor: 'rgba(40, 34, 64, 0.98)',
+              },
+            }}
+          >
+            {noticeVisible ? (
+              <KeyboardArrowUpIcon sx={{ fontSize: 18 }} />
+            ) : (
+              <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+            )}
+          </Box>
+        )}
+        {hasChatNotice && noticeVisible && (
+          <ChatNoticeBanner title={chatRulesTitle} body={chatRules} onClose={toggleNoticeVisible} />
+        )}
         {messages.length === 0 ? (
           <StyledChatEmpty>
             <ForumOutlinedIcon sx={{ fontSize: 40, opacity: 0.35 }} />

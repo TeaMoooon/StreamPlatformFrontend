@@ -220,8 +220,8 @@ export const SettingsSupportSection = () => {
       <Box>
         <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Поддержка</Typography>
         <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', mt: 0.5 }}>
-          Вопросы по аккаунту/стриму и обжалование наказаний. Жалобы на нарушения — через «Пожаловаться» на канале или в
-          чате.
+          Вопросы по аккаунту и стриму, обжалование наказаний. Жалобы на нарушения — через «Пожаловаться» на канале или
+          в чате.
         </Typography>
       </Box>
 
@@ -386,7 +386,7 @@ export const SettingsSupportSection = () => {
         </AccordionSummary>
         <AccordionDetails sx={detailsSx}>
           <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-            Платформенные ограничения. Активные (кроме предупреждений) можно обжаловать.
+            Активные наказания, кроме предупреждений, можно обжаловать.
           </Typography>
           {sanctions.length === 0 ? (
             <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Наказаний нет</Typography>

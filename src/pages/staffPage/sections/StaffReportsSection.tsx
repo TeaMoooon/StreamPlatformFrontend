@@ -118,8 +118,8 @@ export const StaffReportsSection = () => {
       <Box>
         <StyledDashboardSectionTitle>Жалобы с сайта</StyledDashboardSectionTitle>
         <StyledDashboardSectionHint>
-          Сюда попадают сигналы через кнопку «Пожаловаться». Быстрый ответ — запрет чата. Нужен бан стрима или полный
-          бан — откройте слева «Мут и бан» и найдите человека. Открытые дольше {STAFF_STALE_HOURS}ч подсвечены.
+          Жалобы с кнопки «Пожаловаться». Бан стрима и полный бан — в разделе «Мут и бан». Открытые дольше{' '}
+          {STAFF_STALE_HOURS}ч подсвечены.
         </StyledDashboardSectionHint>
       </Box>
 

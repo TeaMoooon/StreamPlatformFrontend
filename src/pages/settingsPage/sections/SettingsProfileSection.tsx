@@ -115,9 +115,7 @@ export const SettingsProfileSection = () => {
       {({ values, handleChange, handleBlur, touched, errors, resetForm, setFieldValue, isSubmitting }) => (
         <Form>
           <StyledSettingsSectionTitle>Профиль</StyledSettingsSectionTitle>
-          <StyledSettingsSectionHint>
-            Публичные данные канала. Текущий ник: {userData?.nickname || '—'}
-          </StyledSettingsSectionHint>
+          <StyledSettingsSectionHint>Эти данные видны на странице канала</StyledSettingsSectionHint>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <Box sx={{ ...settingsPanelSx, display: 'flex', flexDirection: 'column', gap: 2 }}>

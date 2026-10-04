@@ -13,19 +13,19 @@ export const getSettingsNavItems = (): SettingsNavItem[] => [
   {
     value: 'profile',
     title: 'Профиль',
-    description: 'Ник, описание, аватар, соцсети',
+    description: 'Как вас видят на канале',
     path: '/settings/profile',
   },
   {
     value: 'security',
     title: 'Безопасность',
-    description: 'Почта и смена пароля',
+    description: 'Вход и устройства',
     path: '/settings/security',
   },
   {
     value: 'support',
     title: 'Поддержка',
-    description: 'Тикеты и апелляции',
+    description: 'Вопросы и обжалования',
     path: '/settings/support',
   },
 ];

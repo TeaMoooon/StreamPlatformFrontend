@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { StaffAuditEntry, auditActionLabel, fetchStaffAudit } from '../../../api/staffApi';
-import { StyledDashboardSectionHint, StyledDashboardSectionTitle } from '../../dashboardPage/StyledDashboardPage';
+import { StyledDashboardSectionTitle } from '../../dashboardPage/StyledDashboardPage';
 
 const panelSx = {
   p: 2,
@@ -44,9 +44,6 @@ export const StaffAuditSection = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box>
         <StyledDashboardSectionTitle>История действий</StyledDashboardSectionTitle>
-        <StyledDashboardSectionHint>
-          Кто из сотрудников что сделал: выдал бан, ответил в поддержке, сменил роль и т.д.
-        </StyledDashboardSectionHint>
       </Box>
 
       {error && <Typography sx={{ color: '#ff8a8a', fontSize: 14 }}>{error}</Typography>}

@@ -713,9 +713,7 @@ export const SettingsSecuritySection = () => {
 
       <Box sx={{ mt: 4 }}>
         <StyledSettingsSectionTitle>История входов</StyledSettingsSectionTitle>
-        <StyledSettingsSectionHint>
-          Дата, время, устройство и частично скрытый IP последних успешных авторизаций.
-        </StyledSettingsSectionHint>
+        <StyledSettingsSectionHint>Последние успешные входы в аккаунт</StyledSettingsSectionHint>
 
         <Box sx={{ ...settingsPanelSx, mt: 1 }}>
           {historyLoading ? (

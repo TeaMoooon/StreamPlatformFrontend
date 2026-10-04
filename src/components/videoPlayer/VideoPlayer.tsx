@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import Hls from 'hls.js';
 import {
   Avatar,
@@ -55,6 +55,11 @@ type VideoPlayerProps = {
   streamer?: VideoPlayerStreamerInfo | null;
   /** false — не растягивать по высоте родителя (мобильный 16:9) */
   fillContainer?: boolean;
+  /**
+   * Desktop stream page: keep the player inside the viewport (no page scroll to see video)
+   * when the column grows wider (e.g. chat collapsed). Uses real video aspect ratio when known.
+   */
+  fitViewport?: boolean;
   viewerCount?: number;
   fullscreenTargetRef?: RefObject<HTMLElement | null>;
   onFullscreenChange?: (active: boolean) => void;
@@ -135,6 +140,7 @@ export const VideoPlayer = ({
   variant = 'embedded',
   streamer,
   fillContainer = true,
+  fitViewport = false,
   viewerCount = 0,
   fullscreenTargetRef,
   onFullscreenChange,
@@ -146,6 +152,7 @@ export const VideoPlayer = ({
   const canFullscreenChat = !!onFullscreenChatChange;
   const usesExternalFullscreen = !!fullscreenTargetRef;
   const containerRef = useRef<HTMLDivElement>(null);
+  const fitParentRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,6 +174,7 @@ export const VideoPlayer = ({
   const [currentLevel, setCurrentLevel] = useState(-1);
   const [qualityOpen, setQualityOpen] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
+  const [viewportFitSize, setViewportFitSize] = useState<{ width: number; height: number } | null>(null);
   const qualityMenuRef = useRef<HTMLDivElement>(null);
   const [liveDelaySec, setLiveDelaySec] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -521,6 +529,70 @@ export const VideoPlayer = ({
     return () => video.removeEventListener('loadedmetadata', syncAspectRatio);
   }, [src]);
 
+  const viewportFitActive = fitViewport && isEmbedded && !fillContainer && !isFullscreen;
+
+  useLayoutEffect(() => {
+    if (!viewportFitActive) {
+      setViewportFitSize(null);
+      return;
+    }
+
+    const el = containerRef.current;
+    if (!el) return;
+
+    const parent = el.parentElement;
+    if (!parent) return;
+    fitParentRef.current = parent;
+
+    const VIEWPORT_BOTTOM_GAP = 12;
+    const MIN_HEIGHT = 180;
+
+    const update = () => {
+      const host = fitParentRef.current;
+      const node = containerRef.current;
+      if (!host || !node) return;
+
+      const availableWidth = host.clientWidth;
+      if (availableWidth <= 0) return;
+
+      const top = node.getBoundingClientRect().top;
+      const availableHeight = Math.max(MIN_HEIGHT, window.innerHeight - top - VIEWPORT_BOTTOM_GAP);
+      const ratio = videoAspectRatio && videoAspectRatio > 0 ? videoAspectRatio : 16 / 9;
+
+      // Prefer filling host width; only letterbox (narrower width) when height is capped.
+      let width = availableWidth;
+      let height = width / ratio;
+      if (height > availableHeight) {
+        height = availableHeight;
+        width = height * ratio;
+      }
+
+      width = Math.max(1, Math.round(width));
+      height = Math.max(MIN_HEIGHT, Math.round(height));
+
+      setViewportFitSize((prev) => (prev && prev.width === width && prev.height === height ? prev : { width, height }));
+    };
+
+    update();
+    const raf = window.requestAnimationFrame(update);
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(parent);
+    // Header / chrome above the player live in ancestor columns — watch them too.
+    const column = parent.parentElement;
+    if (column && column !== parent) ro.observe(column);
+    const outer = column?.parentElement;
+    if (outer && outer !== column) ro.observe(outer);
+
+    window.addEventListener('resize', update);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, [viewportFitActive, videoAspectRatio, src]);
+
   // Отставание от live edge (пауза, буфер, сеть)
   useEffect(() => {
     if (mode !== 'live') {
@@ -669,15 +741,22 @@ export const VideoPlayer = ({
   const compactAspectRatio = videoAspectRatio ?? '16/9';
   const playerFillsHost = embeddedFills || isFullscreen;
   const useCompactLayout = isEmbedded && !playerFillsHost && !isFullscreen;
+  const useViewportFitSize = viewportFitActive && viewportFitSize != null;
 
   if (!src) {
     return (
       <Box
+        ref={containerRef}
         sx={{
           position: 'relative',
-          width: '100%',
-          flex: isEmbedded ? 1 : undefined,
-          aspectRatio: '16/9',
+          width: useViewportFitSize ? viewportFitSize.width : '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          mx: useViewportFitSize ? 'auto' : undefined,
+          height: useViewportFitSize ? viewportFitSize.height : undefined,
+          // Must be able to shrink — fixed px width + flex-shrink:0 locked the column and chat.
+          flex: isEmbedded ? (useViewportFitSize ? '0 1 auto' : 1) : undefined,
+          aspectRatio: useViewportFitSize ? undefined : '16/9',
           bgcolor: '#000',
           borderRadius: isEmbedded ? 0 : 3,
         }}
@@ -693,20 +772,27 @@ export const VideoPlayer = ({
       onTouchStart={handleContainerTouch}
       sx={{
         position: 'relative',
-        width: '100%',
-        flex: playerFillsHost ? 1 : isEmbedded ? '0 0 auto' : undefined,
-        minHeight: playerFillsHost ? 0 : undefined,
+        width: useViewportFitSize ? viewportFitSize.width : '100%',
         maxWidth: isEmbedded ? '100%' : 960,
-        mx: isEmbedded ? 0 : 'auto',
-        aspectRatio: useCompactLayout
-          ? compactAspectRatio
-          : isEmbedded && !isFullscreen
-            ? undefined
-            : isFullscreen || usesExternalFullscreen
-              ? 'auto'
-              : '16/9',
-        height:
-          playerFillsHost && !isFullscreen
+        minWidth: 0,
+        mx: useViewportFitSize ? 'auto' : isEmbedded ? 0 : 'auto',
+        // Allow shrink when chat reopens — otherwise old px width blocks the flex column.
+        flex: playerFillsHost ? 1 : isEmbedded ? (useViewportFitSize ? '0 1 auto' : 1) : undefined,
+        minHeight: playerFillsHost ? 0 : undefined,
+        aspectRatio: useViewportFitSize
+          ? undefined
+          : useCompactLayout
+            ? compactAspectRatio
+            : isEmbedded && !isFullscreen
+              ? undefined
+              : isFullscreen || usesExternalFullscreen
+                ? 'auto'
+                : '16/9',
+        // Avoid a one-frame oversized player before JS fit runs.
+        maxHeight: viewportFitActive && !useViewportFitSize ? 'calc(100dvh - 140px)' : undefined,
+        height: useViewportFitSize
+          ? viewportFitSize.height
+          : playerFillsHost && !isFullscreen
             ? '100%'
             : isFullscreen
               ? '100%'

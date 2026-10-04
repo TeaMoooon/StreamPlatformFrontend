@@ -49,9 +49,12 @@ export const HeaderNotificationMenu = () => {
   const pageCount = Math.ceil(totalCount / limit) || 1;
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-    // Refresh when opening the bell so new sanctions appear even without SignalR.
-    dispatch(notificationWithPagination(page, limit));
+    setAnchorEl((prev) => {
+      if (prev) return null;
+      // Refresh when opening the bell so new sanctions appear even without SignalR.
+      dispatch(notificationWithPagination(page, limit));
+      return event.currentTarget;
+    });
   };
 
   const handleClose = () => {

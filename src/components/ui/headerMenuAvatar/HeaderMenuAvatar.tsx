@@ -94,7 +94,7 @@ export const HeaderMenuAvatar = () => {
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl((prev) => (prev ? null : event.currentTarget));
   };
 
   const handleOpenAuth = (tab: 0 | 1) => {

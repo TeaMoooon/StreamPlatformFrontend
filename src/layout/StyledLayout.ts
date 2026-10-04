@@ -1,5 +1,7 @@
-import { Box, Menu, MenuItem, Pagination } from '@mui/material';
+import { Box, MenuItem, Pagination } from '@mui/material';
 import { styled } from '@mui/system';
+
+export { StyledMenu } from './StyledMenu';
 
 export const StyleHeader = styled(Box)(() => ({
   minHeight: '65px',
@@ -11,7 +13,14 @@ export const StyleHeader = styled(Box)(() => ({
 export const StyleHeaderContainer = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
-  padding: '10px var(--layout-padding-x)',
+  width: '90%',
+  maxWidth: 'none',
+  margin: '0 auto',
+  padding: '10px 0',
+  '@media (max-width: 768px)': {
+    width: '100%',
+    padding: '10px var(--layout-padding-x)',
+  },
 }));
 
 export const StyleHeaderBlock = styled(Box)(() => ({
@@ -22,25 +31,6 @@ export const StyleHeaderBlock = styled(Box)(() => ({
   width: '100%',
   '@media (max-width: 768px)': {
     gap: '5px',
-  },
-}));
-
-export const StyledMenu = styled(Menu)(() => ({
-  '& .MuiMenu-paper': {
-    backgroundColor: 'var(--background-header-menu)',
-    backdropFilter: 'blur(10px)',
-  },
-  '& .MuiList-root': {
-    backgroundColor: 'var(--background-header-menu)',
-    color: 'var(--color-link)',
-    backdropFilter: 'blur(10px)',
-  },
-  '& .MuiMenuItem-root': {
-    color: 'var(--color-link)',
-    '&:hover': {
-      backgroundColor: 'var(--background-tab)',
-      color: 'var(--hover-header-menu)',
-    },
   },
 }));
 

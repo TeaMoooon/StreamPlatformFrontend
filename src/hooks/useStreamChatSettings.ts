@@ -14,6 +14,7 @@ export const useStreamChatSettings = (channelNickname: string, mode: 'own' | 'de
   const [settings, setSettings] = useState<StreamChatSettings>({
     slowModeSeconds: 0,
     chatRules: '',
+    chatRulesTitle: '',
     chatMode: 'normal',
   });
   const [modLog, setModLog] = useState<StreamChatModerationLogEntry[]>([]);
@@ -91,6 +92,7 @@ export const useStreamChatSettings = (channelNickname: string, mode: 'own' | 'de
       const result = await updateStreamChatSettings(streamerId, {
         slowModeSeconds: patch.slowModeSeconds ?? settings.slowModeSeconds,
         chatRules: patch.chatRules ?? settings.chatRules,
+        chatRulesTitle: patch.chatRulesTitle ?? settings.chatRulesTitle,
         chatMode: patch.chatMode ?? settings.chatMode,
       });
 

@@ -7,7 +7,6 @@ export type StreamDashboardSettings = {
   categoryName?: string | null;
   tags: string[];
   language: string;
-  announcement: string;
   previewUrl?: string | null;
   isLive: boolean;
   subscriberCount: number;
@@ -25,7 +24,6 @@ const normalizeSettings = (raw: Record<string, unknown>): StreamDashboardSetting
     return Array.isArray(rawTags) ? rawTags.map((tag) => String(tag)) : [];
   })(),
   language: String(raw.language ?? raw.Language ?? 'ru'),
-  announcement: String(raw.announcement ?? raw.Announcement ?? ''),
   previewUrl: (raw.previewUrl ?? raw.PreviewUrl ?? null) as string | null,
   isLive: Boolean(raw.isLive ?? raw.IsLive),
   subscriberCount: Number(raw.subscriberCount ?? raw.SubscriberCount ?? 0),
@@ -55,7 +53,6 @@ export const updateStreamDashboardSettings = async (streamerId: number, payload:
       categoryId: payload.categoryId,
       tags: payload.tags,
       language: payload.language,
-      announcement: payload.announcement,
     }),
   });
 

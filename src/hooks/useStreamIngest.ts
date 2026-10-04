@@ -6,7 +6,8 @@ import { fetchStreamKey } from '../store/actions/StreamActions';
 import { postStreamKey } from '../store/actions/SettingsActions';
 import { getRtmpServerUrl } from '../utils/getRtmpServerUrl';
 
-const BLOCK_POLL_MS = 30_000;
+/** Ban-status refresh while dashboard is open — keep well under rate limits. */
+const BLOCK_POLL_MS = 120_000;
 
 /** Stream ingest credentials — only for the channel owner (never moderators). */
 export const useStreamIngest = (enabled: boolean) => {
@@ -21,23 +22,18 @@ export const useStreamIngest = (enabled: boolean) => {
 
   useEffect(() => {
     if (!enabled) return;
+
     loadKey();
 
-    const onFocus = () => loadKey();
-    window.addEventListener('focus', onFocus);
     const timer = window.setInterval(loadKey, BLOCK_POLL_MS);
-
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
   }, [enabled, loadKey]);
 
   const regenerateKey = useCallback(() => {
     if (!enabled) return;
     dispatch(postStreamKey()).then(() => {
       // Keep block status after key reset (PUT streamKey may return only the key).
-      dispatch(fetchStreamKey());
+      dispatch(fetchStreamKey({ force: true }));
     });
   }, [dispatch, enabled]);
 

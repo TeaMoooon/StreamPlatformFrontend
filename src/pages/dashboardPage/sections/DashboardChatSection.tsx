@@ -34,6 +34,14 @@ const fieldSx = {
     bgcolor: 'rgba(255,255,255,0.04)',
     fontSize: 13,
     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
+    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.22)' },
+    '&.Mui-focused fieldset': { borderColor: 'rgba(142,123,255,0.7)' },
+  },
+  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.55)' },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#b8adff' },
+  '& .MuiInputBase-input::placeholder': {
+    color: 'rgba(255,255,255,0.35)',
+    opacity: 1,
   },
 };
 
@@ -98,8 +106,10 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
   } = useStreamBans(channelNickname, mode);
 
   const [chatRulesDraft, setChatRulesDraft] = useState<string | null>(null);
+  const [chatRulesTitleDraft, setChatRulesTitleDraft] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const rulesValue = chatRulesDraft ?? settings.chatRules;
+  const rulesTitleValue = chatRulesTitleDraft ?? settings.chatRulesTitle;
 
   const isLoading = settingsLoading || bansLoading;
   const error = settingsError || bansError;
@@ -108,10 +118,11 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
   const handleRulesSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaveNotice(null);
-    const ok = await saveSettings({ chatRules: rulesValue });
+    const ok = await saveSettings({ chatRules: rulesValue, chatRulesTitle: rulesTitleValue });
     if (ok) {
       setChatRulesDraft(null);
-      setSaveNotice('Правила чата сохранены');
+      setChatRulesTitleDraft(null);
+      setSaveNotice('Уведомление в чате сохранено');
     }
   };
 
@@ -163,11 +174,6 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', width: '100%' }}>
       <Box>
         <StyledDashboardSectionTitle sx={{ mb: 0.5 }}>Настройки чата</StyledDashboardSectionTitle>
-        <StyledDashboardSectionHint sx={{ mb: 0 }}>
-          {mode === 'own'
-            ? 'Компактные блоки: уведомления, правила и модерация.'
-            : `Модерация чата канала ${channelNickname}.`}
-        </StyledDashboardSectionHint>
       </Box>
 
       <DashboardSaveNotice message={saveNotice} onClose={() => setSaveNotice(null)} />
@@ -284,8 +290,8 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
 
         <DashboardBlock
           icon={<RuleOutlinedIcon sx={{ fontSize: 18, color: '#8e7bff' }} />}
-          title="Правила чата"
-          hint="Блок «Правила чата» над сообщениями в чате"
+          title="Уведомление в чате"
+          hint="Баннер над сообщениями; зрители и модераторы могут свернуть его стрелкой под шапкой чата"
           sx={{ gridColumn: { xs: '1', sm: '1 / -1', lg: 'auto' } }}
         >
           <Box
@@ -294,23 +300,39 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
             sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, justifyContent: 'space-between' }}
           >
             <TextField
+              fullWidth
+              size="small"
+              label="Заголовок"
+              value={rulesTitleValue}
+              onChange={(e) => setChatRulesTitleDraft(e.target.value.slice(0, 80))}
+              placeholder="Например: Правила чата"
+              sx={fieldSx}
+            />
+            <TextField
               multiline
               minRows={3}
               maxRows={4}
               fullWidth
               size="small"
+              label="Текст"
               value={rulesValue}
               onChange={(e) => setChatRulesDraft(e.target.value.slice(0, 500))}
               placeholder="Будьте вежливы, без спама..."
               sx={fieldSx}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{rulesValue.length} / 500</Typography>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+            >
+              <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                {rulesTitleValue.length} / 80 · {rulesValue.length} / 500
+              </Typography>
               <Button
                 type="submit"
                 size="small"
                 variant="contained"
-                disabled={isSaving || rulesValue === settings.chatRules}
+                disabled={
+                  isSaving || (rulesValue === settings.chatRules && rulesTitleValue === settings.chatRulesTitle)
+                }
                 sx={{ textTransform: 'none', bgcolor: '#6d5dfb', '&:hover': { bgcolor: '#8e7bff' } }}
               >
                 Сохранить
@@ -377,7 +399,7 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
         <DashboardBlock
           icon={<HistoryOutlinedIcon sx={{ fontSize: 18, color: '#8e7bff' }} />}
           title="Лог модерации"
-          hint={`Последние ${Math.min(modLog.length, 30)} записей`}
+          hint="Недавние действия модераторов"
           sx={{ gridColumn: { sm: 'auto', lg: 'span 2' } }}
         >
           {modLog.length === 0 ? (

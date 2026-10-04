@@ -59,7 +59,7 @@ export const DashboardShell = ({
 
   return (
     <ContainerBox>
-      <StyledDashboardContainer className="container">
+      <StyledDashboardContainer>
         <StyledDashboardSidebar>
           <StyledDashboardHero>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -69,9 +69,7 @@ export const DashboardShell = ({
               </Typography>
             </Box>
             <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-              {mode === 'own'
-                ? 'Настройки вашего канала: эфир, команда и чат.'
-                : `Панель канала ${channelNickname}. Доступ по роли в команде стримера.`}
+              {mode === 'own' ? 'Управление эфиром, командой и чатом.' : 'Управление чужим каналом по роли в команде.'}
             </Typography>
             <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', mt: 0.5 }}>
               Канал: {channelNickname}
