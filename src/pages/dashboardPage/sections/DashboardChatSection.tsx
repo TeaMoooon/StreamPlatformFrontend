@@ -17,6 +17,8 @@ import { getChatModeLabel } from '../../../components/chat/chat.utils';
 import { DashboardSaveNotice } from '../components/DashboardSaveNotice';
 import { DashboardBlock, dashboardChatGridSx } from '../components/DashboardBlock';
 import { StyledDashboardSectionHint, StyledDashboardSectionTitle } from '../StyledDashboardPage';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import { DEFAULT_AVATAR } from '../../../constants/defaultAvatars';
 
 const SCROLL_BOX_SX = {
   flex: 1,
@@ -361,10 +363,7 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
                     borderBottom: '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
-                  <Avatar
-                    src={ban.profileImage ? `${process.env.REACT_APP_API_LOCAL}${ban.profileImage}` : undefined}
-                    sx={{ width: 28, height: 28 }}
-                  />
+                  <Avatar src={resolveMediaUrl(ban.profileImage) || DEFAULT_AVATAR} sx={{ width: 28, height: 28 }} />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: 13, lineHeight: 1.2 }}>
                       {ban.username}

@@ -3,7 +3,7 @@ import NotificationReducer, {
   ClearNotification,
   NotificationFetchSuccess,
 } from '../slices/NotificationSlice';
-import { mapHubNotification } from '../actions/NotificationActions';
+import { buildNotificationLink, mapHubNotification } from '../actions/NotificationActions';
 
 describe('NotificationSlice robustness', () => {
   test('NotificationFetchSuccess handles missing notifications without throwing', () => {
@@ -78,5 +78,34 @@ describe('NotificationSlice robustness', () => {
 
     // Defensive expectation: without stable id we should not render/merge the notification.
     expect(result).toBeNull();
+  });
+
+  test('buildNotificationLink deep-links support ticket reply to concrete ticket/message', () => {
+    expect(buildNotificationLink('SupportTicketReply', { TicketId: 42, MessageId: 99 })).toBe(
+      '/settings/support?ticket=42&message=99'
+    );
+  });
+
+  test('buildNotificationLink deep-links sanction and appeal', () => {
+    expect(buildNotificationLink('PlatformSanction', { SanctionId: 7 })).toBe('/settings/support?sanction=7');
+    expect(buildNotificationLink('PlatformAppeal', { AppealId: 3 })).toBe('/settings/support?appeal=3');
+  });
+
+  test('buildNotificationLink uses streamer/subscriber nicknames', () => {
+    expect(buildNotificationLink('StreamStarted', { StreamerName: 'SACKE3' })).toBe('/SACKE3');
+    expect(buildNotificationLink('NewFollower', { SubscriberName: 'alice' })).toBe('/alice');
+  });
+
+  test('mapHubNotification includes deep link for support reply', () => {
+    const result = mapHubNotification({
+      type: 'SupportTicketReply',
+      payload: JSON.stringify({ TicketId: 12, MessageId: 34, Subject: 'Ключ', Message: 'Ответ staff' }),
+      date: '2020-01-01T00:00:00.000Z',
+      isRead: false,
+      id: 1,
+    } as any);
+
+    expect(result?.link).toBe('/settings/support?ticket=12&message=34');
+    expect(result?.message).toBe('Ответ staff');
   });
 });

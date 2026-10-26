@@ -38,6 +38,8 @@ import {
   VOD_HLS_CONFIG,
 } from './videoPlayer.constants';
 import { getMutedStorage, getVolumeStorage, setMutedStorage, setVolumeStorage } from '../../utils/storage';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
+import { DEFAULT_AVATAR } from '../../constants/defaultAvatars';
 
 type StreamMode = 'live' | 'vod';
 type VideoPlayerVariant = 'standalone' | 'embedded';
@@ -67,11 +69,7 @@ type VideoPlayerProps = {
   onFullscreenChatChange?: (open: boolean) => void;
 };
 
-const resolveStreamerAvatarUrl = (avatarUrl?: string | null) => {
-  if (!avatarUrl) return '/default-avatar.jpg';
-  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) return avatarUrl;
-  return `${process.env.REACT_APP_API_LOCAL ?? ''}${avatarUrl}`;
-};
+const resolveStreamerAvatarUrl = (avatarUrl?: string | null) => resolveMediaUrl(avatarUrl) || DEFAULT_AVATAR;
 
 const hasSavedAudioPrefs = () => localStorage.getItem('video-player-volume') !== null;
 

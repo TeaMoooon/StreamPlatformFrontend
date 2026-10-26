@@ -9,6 +9,8 @@ import { deleteSubscribe, streamerFolows, subscribeToUser } from '../../../../st
 import { useAppSelector } from '../../../../hooks/redux';
 import { useHeaderModal } from '../../../../context/HeaderModalContext';
 import { IProfile, ISubscriber } from '../../../../types/share';
+import { DEFAULT_AVATAR } from '../../../../constants/defaultAvatars';
+import { resolveMediaUrl } from '../../../../utils/resolveMediaUrl';
 
 const panelSx = {
   borderRadius: 2,
@@ -42,9 +44,8 @@ const unfollowButtonSx = {
 } as const;
 
 const mediaUrl = (path?: string | null) => {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  return `${process.env.REACT_APP_API_LOCAL}${path}`;
+  const resolved = resolveMediaUrl(path);
+  return resolved || undefined;
 };
 
 const formatSubscriberCount = (count: number) => {
@@ -136,7 +137,7 @@ export const UserBanner = ({ userData, isNotProfileData, isLive = false }: UserB
     }
   };
 
-  const avatarSrc = mediaUrl(userData?.profileImage) ?? '/default-avatar.jpg';
+  const avatarSrc = mediaUrl(userData?.profileImage) ?? DEFAULT_AVATAR;
   const backgroundSrc = mediaUrl(userData?.backgroundImage);
   const subscriberLabel = formatSubscriberCount(subscribers.length);
   const profileDescription = userData?.profileDescription?.trim() ?? '';

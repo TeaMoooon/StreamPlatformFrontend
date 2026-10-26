@@ -16,19 +16,29 @@ import { useAppSelector } from '../../../hooks/redux';
 import { StyledMenu } from '../../../layout/StyledLayout';
 import { ModalComponent } from '../../modal/ModalComponent';
 // mui
-import { IconButton, MenuItem } from '@mui/material';
+import { Avatar, IconButton, MenuItem } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { fetchStaffMe } from '../../../api/reportsApi';
+import { DEFAULT_AVATAR } from '../../../constants/defaultAvatars';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 
 export const HeaderMenuAvatar = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: profile, isAuth } = useAppSelector((state) => state.user);
+  const resolvedAvatar = resolveMediaUrl(profile?.profileImage) || DEFAULT_AVATAR;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openModal, setOpenModal] = useState(false);
   const [authTab, setAuthTab] = useState(0);
   const [isStaff, setIsStaff] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+
+  const avatarSrc = avatarFailed ? DEFAULT_AVATAR : resolvedAvatar;
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [resolvedAvatar]);
 
   useEffect(() => {
     if (!isAuth) {
@@ -120,8 +130,33 @@ export const HeaderMenuAvatar = () => {
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
+        sx={{ p: isAuth ? 0.25 : 1 }}
       >
-        <PersonIcon sx={{ color: 'var(--white)' }} fontSize="medium" />
+        {isAuth ? (
+          <Avatar
+            src={avatarSrc}
+            alt={profile?.nickname || 'Профиль'}
+            imgProps={{
+              onError: () => setAvatarFailed(true),
+            }}
+            sx={{
+              width: 34,
+              height: 34,
+              bgcolor: 'rgba(23, 24, 31, 0.95)',
+              border: '2px solid rgba(142, 123, 255, 0.75)',
+              boxShadow: '0 0 0 1px rgba(109, 93, 251, 0.25), 0 0 10px rgba(109, 93, 251, 0.35)',
+              transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+              '.MuiIconButton-root:hover &': {
+                borderColor: 'rgba(184, 173, 255, 0.95)',
+                boxShadow: '0 0 0 1px rgba(142, 123, 255, 0.4), 0 0 14px rgba(142, 123, 255, 0.5)',
+              },
+            }}
+          >
+            {(profile?.nickname || '?').slice(0, 1).toUpperCase()}
+          </Avatar>
+        ) : (
+          <PersonIcon sx={{ color: 'var(--white)' }} fontSize="medium" />
+        )}
       </IconButton>
       <StyledMenu
         id="basic-menu"

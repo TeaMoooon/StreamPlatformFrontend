@@ -249,7 +249,7 @@ export type SidebarContextType = {
 };
 
 export type ModalContextType = {
-  showAlert: (message: string, type?: AlertType, title?: string) => void;
+  showAlert: (message: string, type?: AlertType, title?: string, link?: string) => void;
 };
 
 export interface ICardTypography {
@@ -262,9 +262,6 @@ export interface StyledButtonSearchProps {
   h?: string;
 }
 
-export interface StyledAlertMessageProps {
-  type?: string;
-}
 export interface StyledDragBoxProps {
   dragActive?: boolean;
 }

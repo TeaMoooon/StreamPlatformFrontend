@@ -33,7 +33,9 @@ export const StyledMenu = forwardRef<HTMLDivElement, MenuProps>(function StyledM
   useEffect(() => {
     if (!open) return;
 
-    const handlePointerDown = (event: PointerEvent) => {
+    // Close on pointerup (not pointerdown) so MenuItem/Link clicks are not cancelled
+    // when the menu unmounts before the click event — common on mobile touch.
+    const handlePointerUp = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
       if (paperRef.current?.contains(target)) return;
@@ -41,8 +43,8 @@ export const StyledMenu = forwardRef<HTMLDivElement, MenuProps>(function StyledM
       onClose?.(event, 'backdropClick');
     };
 
-    document.addEventListener('pointerdown', handlePointerDown, true);
-    return () => document.removeEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('pointerup', handlePointerUp, true);
+    return () => document.removeEventListener('pointerup', handlePointerUp, true);
   }, [open, onClose, anchorEl]);
 
   const slotPropsPaper = slotProps?.paper;

@@ -1,7 +1,6 @@
-import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
-import { AlertProps, Box } from '@mui/material';
-import { InlineNotice } from '../../../components/ui/InlineNotice';
+import { createContext, ReactNode, useCallback, useContext } from 'react';
 import { AlertType } from '../../../types/share';
+import { useHeaderModal } from '../../../context/HeaderModalContext';
 
 type SettingsNoticeContextType = {
   showNotice: (message: string, type?: AlertType) => void;
@@ -10,29 +9,21 @@ type SettingsNoticeContextType = {
 
 const SettingsNoticeContext = createContext<SettingsNoticeContextType | undefined>(undefined);
 
-const mapAlertType = (type: AlertType): NonNullable<AlertProps['severity']> => {
-  if (type === 'error') return 'error';
-  if (type === 'warning') return 'warning';
-  if (type === 'info') return 'info';
-  return 'success';
-};
-
+/** Settings feedback uses the same top-right toast as the rest of the site. */
 export const SettingsNoticeProvider = ({ children }: { children: ReactNode }) => {
-  const [notice, setNotice] = useState<{ message: string; severity: NonNullable<AlertProps['severity']> } | null>(null);
+  const { showAlert } = useHeaderModal();
 
-  const showNotice = useCallback((message: string, type: AlertType = 'info') => {
-    setNotice({ message, severity: mapAlertType(type) });
-  }, []);
+  const showNotice = useCallback(
+    (message: string, type: AlertType = 'info') => {
+      showAlert(message, type);
+    },
+    [showAlert]
+  );
 
-  const clearNotice = useCallback(() => setNotice(null), []);
+  const clearNotice = useCallback(() => undefined, []);
 
   return (
-    <SettingsNoticeContext.Provider value={{ showNotice, clearNotice }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {notice && <InlineNotice message={notice.message} severity={notice.severity} onClose={clearNotice} />}
-        {children}
-      </Box>
-    </SettingsNoticeContext.Provider>
+    <SettingsNoticeContext.Provider value={{ showNotice, clearNotice }}>{children}</SettingsNoticeContext.Provider>
   );
 };
 

@@ -185,7 +185,7 @@ export const StaffAppealsSection = () => {
                       onClick={() =>
                         run(appeal.id, {
                           status: 'approved',
-                          staffNote: notes[appeal.id] || 'Апелляция одобрена',
+                          staffNote: notes[appeal.id]?.trim() || undefined,
                           revokeSanction: true,
                         })
                       }
@@ -200,7 +200,7 @@ export const StaffAppealsSection = () => {
                       onClick={() =>
                         run(appeal.id, {
                           status: 'rejected',
-                          staffNote: notes[appeal.id] || 'Апелляция отклонена',
+                          staffNote: notes[appeal.id]?.trim() || undefined,
                           revokeSanction: false,
                         })
                       }

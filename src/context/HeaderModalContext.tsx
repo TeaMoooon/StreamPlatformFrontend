@@ -1,37 +1,38 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
-// types
+import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { AlertType, ModalContextType } from '../types/share';
-import { ModalAlert } from '../components/modal/ModalAlert';
+import { ToastItemData, ToastStack, toastDurationMs } from '../components/toast/ToastAlert';
 
 const HeaderModalContext = createContext<ModalContextType | undefined>(undefined);
 
+const MAX_TOASTS = 4;
+
 export const HeaderModalProvider = ({ children }: { children: ReactNode }) => {
-  const [open, setOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<{
-    type: AlertType;
-    message: string;
-    title?: string;
-  } | null>(null);
+  const [toasts, setToasts] = useState<ToastItemData[]>([]);
+  const idRef = useRef(1);
 
-  const showAlert = (message: string, type: AlertType = 'info', title?: string) => {
-    setAlertMessage({ message, type, title });
-    setOpen(true);
-  };
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
-  const handleClose = () => setOpen(false);
+  const showAlert = useCallback((message: string, type: AlertType = 'info', title?: string, link?: string) => {
+    const id = idRef.current++;
+    const next: ToastItemData = {
+      id,
+      type,
+      title,
+      message,
+      link: link || undefined,
+      durationMs: toastDurationMs(type),
+    };
+    setToasts((prev) => [next, ...prev].slice(0, MAX_TOASTS));
+  }, []);
+
+  const value = useMemo(() => ({ showAlert }), [showAlert]);
 
   return (
-    <HeaderModalContext.Provider value={{ showAlert }}>
+    <HeaderModalContext.Provider value={value}>
       {children}
-      {alertMessage && (
-        <ModalAlert
-          message={alertMessage.message}
-          type={alertMessage.type}
-          title={alertMessage.title}
-          open={open}
-          onClose={handleClose}
-        />
-      )}
+      <ToastStack toasts={toasts} onClose={dismissToast} />
     </HeaderModalContext.Provider>
   );
 };

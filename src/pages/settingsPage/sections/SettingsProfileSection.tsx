@@ -13,6 +13,7 @@ import { SocialLinksEditor } from '../components/socialLinksEditor/SocialLinksEd
 import { ProfileImageField, SettingsFieldBlock, SettingsFormActions } from '../components/ProfileImageField';
 import { settingsFieldSx, settingsPanelSx } from '../settings.styles';
 import { StyledSettingsSectionHint, StyledSettingsSectionTitle } from '../StyledSettingsPage';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 
 export const SettingsProfileSection = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,12 +31,7 @@ export const SettingsProfileSection = () => {
     socialLinks: normalizeSocialLinks(userData?.socialLinks),
   };
 
-  const resolveMediaUrl = (url?: string | null) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const base = process.env.REACT_APP_API_LOCAL || '';
-    return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
+  const resolveProfileMediaUrl = (url?: string | null) => resolveMediaUrl(url) || null;
 
   const onSubmit = async (values: IProfileChange, { setFieldError, setSubmitting, resetForm }: any) => {
     const normalizedSocial = normalizeSocialLinks(values.socialLinks);
@@ -167,7 +163,7 @@ export const SettingsProfileSection = () => {
                 hint="JPEG, PNG или WEBP до 5 MB"
                 name="profileImage"
                 cropAspect="avatar"
-                currentUrl={resolveMediaUrl(userData?.profileImage)}
+                currentUrl={resolveProfileMediaUrl(userData?.profileImage)}
                 value={values.profileImage ?? null}
                 setFieldValue={setFieldValue}
                 touched={touched.profileImage}
@@ -178,7 +174,7 @@ export const SettingsProfileSection = () => {
                 hint="JPEG, PNG или WEBP до 5 MB"
                 name="backgroundImage"
                 cropAspect="cover"
-                currentUrl={resolveMediaUrl(userData?.backgroundImage)}
+                currentUrl={resolveProfileMediaUrl(userData?.backgroundImage)}
                 value={values.backgroundImage ?? null}
                 setFieldValue={setFieldValue}
                 touched={touched.backgroundImage}

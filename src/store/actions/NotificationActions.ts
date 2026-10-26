@@ -87,6 +87,60 @@ const normalizeNotificationType = (type: unknown) =>
     .trim()
     .toLowerCase();
 
+const pickPayload = <T = unknown>(payload: Record<string, any> | null, ...keys: string[]): T | undefined => {
+  if (!payload) return undefined;
+  for (const key of keys) {
+    if (payload[key] != null && payload[key] !== '') return payload[key] as T;
+  }
+  return undefined;
+};
+
+const nicknamePath = (nickname: unknown) => {
+  const value = String(nickname ?? '')
+    .trim()
+    .replace(/^\/+/, '');
+  if (!value || value === 'undefined' || value === 'null') return null;
+  return `/${value}`;
+};
+
+/** Deep-link target for a notification payload (query opens the concrete entity). */
+export const buildNotificationLink = (type: unknown, payload: Record<string, any> | null): string => {
+  const normalized = normalizeNotificationType(type);
+  switch (normalized) {
+    case 'newfollower':
+    case '3':
+      return nicknamePath(pickPayload(payload, 'SubscriberName', 'subscriberName')) || '/';
+    case 'streamstarted':
+    case '1':
+      return nicknamePath(pickPayload(payload, 'StreamerName', 'streamerName')) || '/';
+    case 'supportticketreply':
+    case '7': {
+      const ticketId = pickPayload<number | string>(payload, 'TicketId', 'ticketId');
+      const messageId = pickPayload<number | string>(payload, 'MessageId', 'messageId');
+      if (ticketId == null) return '/settings/support?panel=questions';
+      const params = new URLSearchParams({ ticket: String(ticketId) });
+      if (messageId != null) params.set('message', String(messageId));
+      return `/settings/support?${params.toString()}`;
+    }
+    case 'platformsanction':
+    case '8': {
+      const sanctionId = pickPayload<number | string>(payload, 'SanctionId', 'sanctionId');
+      return sanctionId != null
+        ? `/settings/support?sanction=${encodeURIComponent(String(sanctionId))}`
+        : '/settings/support?panel=sanctions';
+    }
+    case 'platformappeal':
+    case '9': {
+      const appealId = pickPayload<number | string>(payload, 'AppealId', 'appealId');
+      return appealId != null
+        ? `/settings/support?appeal=${encodeURIComponent(String(appealId))}`
+        : '/settings/support?panel=appeals';
+    }
+    default:
+      return '/';
+  }
+};
+
 export const mapHubNotification = (data: INotificationBase): INotificationUnified | null => {
   if (!data || typeof data !== 'object') return null;
 
@@ -112,47 +166,57 @@ export const mapHubNotification = (data: INotificationBase): INotificationUnifie
 
   if (id == null || id === '') return null;
 
+  const link = buildNotificationLink(type, payload);
+
   switch (type) {
     case 'newfollower':
-    case '3':
+    case '3': {
+      const name = pickPayload<string>(payload, 'SubscriberName', 'subscriberName') || 'Кто-то';
       return {
         id,
         title: 'Новый подписчик!',
-        message: `${payload?.SubscriberName ?? payload?.subscriberName} подписался на вас.`,
-        link: `/${payload?.SubscriberName ?? payload?.subscriberName}`,
+        message: `${name} подписался на вас.`,
+        link,
         date,
         icon: PersonAddIcon,
         isRead,
       };
+    }
     case 'streamstarted':
-    case '1':
+    case '1': {
+      const streamer = pickPayload<string>(payload, 'StreamerName', 'streamerName') || 'Стример';
+      const streamName = pickPayload<string>(payload, 'StreamName', 'streamName');
       return {
         id: id ?? payload?.StreamId ?? payload?.streamId,
         date,
         title: 'Новый стрим!',
-        message: `${payload?.StreamerName ?? payload?.streamerName} начал стрим ${payload?.StreamName ?? payload?.streamName}.`,
-        link: `/${payload?.StreamerName ?? payload?.streamerName}`,
+        message: streamName ? `${streamer} начал стрим ${streamName}.` : `${streamer} начал стрим.`,
+        link,
         icon: SmartDisplayIcon,
         isRead,
       };
+    }
     case 'supportticketreply':
-    case '7':
+    case '7': {
+      const subject = pickPayload<string>(payload, 'Subject', 'subject');
+      const message = pickPayload<string>(payload, 'Message', 'message') || 'Поддержка ответила на ваш тикет';
       return {
         id,
-        title: 'Ответ поддержки',
-        message: payload?.Message ?? payload?.message ?? 'Поддержка ответила на ваш тикет',
-        link: '/settings/support',
+        title: subject ? `Ответ: ${subject}` : 'Ответ поддержки',
+        message,
+        link,
         date,
         icon: SupportAgentIcon,
         isRead,
       };
+    }
     case 'platformsanction':
     case '8':
       return {
         id,
-        title: payload?.Title ?? payload?.title ?? 'Вам выдали наказание',
-        message: payload?.Message ?? payload?.message ?? 'Обновление по наказанию платформы',
-        link: '/settings/support',
+        title: pickPayload<string>(payload, 'Title', 'title') || 'Ограничение',
+        message: pickPayload<string>(payload, 'Message', 'message') || 'Обновление по ограничению на платформе',
+        link,
         date,
         icon: GavelIcon,
         isRead,
@@ -161,9 +225,12 @@ export const mapHubNotification = (data: INotificationBase): INotificationUnifie
     case '9':
       return {
         id,
-        title: 'Апелляция',
-        message: payload?.Message ?? payload?.message ?? payload?.Title ?? 'Решение по апелляции',
-        link: '/settings/support',
+        title: pickPayload<string>(payload, 'Title', 'title') || 'Апелляция',
+        message:
+          pickPayload<string>(payload, 'Message', 'message') ||
+          pickPayload<string>(payload, 'Title', 'title') ||
+          'Решение по апелляции',
+        link,
         date,
         icon: GavelIcon,
         isRead,

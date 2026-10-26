@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import DashboardCustomizeOutlinedIcon from '@mui/icons-material/DashboardCustomizeOutlined';
 import { ContainerBox } from '../../components/StylesComponents';
+import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import { DashboardMode, DashboardSection, getDashboardNavItems, isDashboardSection } from './dashboard.constants';
 import { DashboardStreamSection } from './sections/DashboardStreamSection';
 import { DashboardTeamSection } from './sections/DashboardTeamSection';
@@ -43,6 +44,7 @@ export const DashboardShell = ({
   canManageTeam = true,
 }: DashboardShellProps) => {
   const navigate = useNavigate();
+  const { isMobile } = useDeviceDetect();
   const basePath = mode === 'own' ? '/dashboard' : `/${channelNickname}/manage`;
   const navItems = useMemo(
     () =>
@@ -59,40 +61,73 @@ export const DashboardShell = ({
 
   return (
     <ContainerBox>
-      <StyledDashboardContainer>
-        <StyledDashboardSidebar>
-          <StyledDashboardHero>
+      <StyledDashboardContainer sx={{ flexDirection: isMobile ? 'column' : 'row' }}>
+        <StyledDashboardSidebar
+          sx={{
+            maxWidth: isMobile ? '100%' : 320,
+            pr: isMobile ? 0 : 3,
+            mb: isMobile ? 2 : 0,
+          }}
+        >
+          <StyledDashboardHero sx={isMobile ? { p: '16px 16px', mb: 1.5 } : undefined}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DashboardCustomizeOutlinedIcon sx={{ color: '#8e7bff', fontSize: 22 }} />
               <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
                 {mode === 'own' ? 'Панель стрима' : 'Управление каналом'}
               </Typography>
             </Box>
-            <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-              {mode === 'own' ? 'Управление эфиром, командой и чатом.' : 'Управление чужим каналом по роли в команде.'}
-            </Typography>
+            {!isMobile && (
+              <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                {mode === 'own'
+                  ? 'Управление эфиром, командой и чатом.'
+                  : 'Управление чужим каналом по роли в команде.'}
+              </Typography>
+            )}
             <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', mt: 0.5 }}>
               Канал: {channelNickname}
               {roleLabel ? ` · ${roleLabel}` : ''}
             </Typography>
           </StyledDashboardHero>
 
-          <StyledDashboardNavList>
+          <StyledDashboardNavList
+            sx={
+              isMobile
+                ? {
+                    flexDirection: 'row',
+                    flexWrap: 'nowrap',
+                    overflowX: 'auto',
+                    gap: 1,
+                    WebkitOverflowScrolling: 'touch',
+                    pb: 0.5,
+                  }
+                : undefined
+            }
+          >
             {navItems.map((item) => (
               <StyledDashboardNavItem
                 key={item.value}
                 active={activeSection === item.value}
                 onClick={() => navigate(item.path)}
+                sx={
+                  isMobile
+                    ? {
+                        flex: '1 0 auto',
+                        minWidth: 'max-content',
+                        padding: '10px 14px',
+                        gap: 0,
+                      }
+                    : undefined
+                }
               >
                 <StyledDashboardNavTitle>{item.title}</StyledDashboardNavTitle>
-                <StyledDashboardNavDescription>{item.description}</StyledDashboardNavDescription>
+                {!isMobile && <StyledDashboardNavDescription>{item.description}</StyledDashboardNavDescription>}
               </StyledDashboardNavItem>
             ))}
           </StyledDashboardNavList>
         </StyledDashboardSidebar>
 
-        <StyledDashboardContent>
-          <StyledDashboardPanel>
+        <StyledDashboardContent sx={{ width: isMobile ? '100%' : undefined, minWidth: 0 }}>
+          <StyledDashboardPanel sx={isMobile ? { p: '16px' } : undefined}>
             <ActiveSection channelNickname={channelNickname} mode={mode} />
           </StyledDashboardPanel>
         </StyledDashboardContent>

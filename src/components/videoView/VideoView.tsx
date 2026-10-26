@@ -11,12 +11,13 @@ import { IStreamOnline } from '../../types/share';
 import { useCheckedImage } from '../../hooks/checkImgFunctions';
 import { getStreamersLeagueLabel } from '../../utils/streamersLeague';
 import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
+import { DEFAULT_AVATAR } from '../../constants/defaultAvatars';
 
 export const VideoView = ({ item }: { item: IStreamOnline }) => {
   const leagueLabel = getStreamersLeagueLabel(item.streamersLeague);
   const isLive = item.isOnline !== false;
   const previewCandidate = item.previewUrl || item.profileImage;
-  const avatarFallback = resolveMediaUrl(item.profileImage) || '/default-avatar.jpg';
+  const avatarFallback = resolveMediaUrl(item.profileImage) || DEFAULT_AVATAR;
   const previewSrc = useCheckedImage(previewCandidate, avatarFallback);
   const viewerCount = item.viewerCount ?? 0;
 

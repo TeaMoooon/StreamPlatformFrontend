@@ -16,6 +16,8 @@ import { DashboardMode } from '../dashboard.constants';
 import { useStreamTeam } from '../../../hooks/useStreamTeam';
 import { StreamTeamRole } from '../../../api/streamTeamApi';
 import { StyledDashboardSectionHint, StyledDashboardSectionTitle } from '../StyledDashboardPage';
+import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
+import { DEFAULT_AVATAR } from '../../../constants/defaultAvatars';
 
 const ROLE_LABELS: Record<StreamTeamRole, string> = {
   Moderator: 'Модератор',
@@ -195,10 +197,7 @@ export const DashboardTeamSection = ({ channelNickname, mode }: { channelNicknam
                   border: '1px solid rgba(255,255,255,0.08)',
                 }}
               >
-                <Avatar
-                  src={member.profileImage ? `${process.env.REACT_APP_API_LOCAL}${member.profileImage}` : undefined}
-                  sx={{ width: 36, height: 36 }}
-                />
+                <Avatar src={resolveMediaUrl(member.profileImage) || DEFAULT_AVATAR} sx={{ width: 36, height: 36 }} />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{member.nickname}</Typography>
                   <Chip

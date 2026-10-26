@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Accordion,
   AccordionDetails,
@@ -34,6 +35,15 @@ import { useSettingsNotice } from '../context/SettingsNoticeContext';
 import { settingsFieldSx, settingsPanelSx } from '../settings.styles';
 
 type PanelKey = 'new' | 'questions' | 'sanctions' | 'appeal' | 'appeals';
+
+const parsePositiveInt = (value: string | null) => {
+  if (!value) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+const focusBorder = '1px solid rgba(142,123,255,0.65)';
+const focusGlow = '0 0 0 1px rgba(142,123,255,0.25)';
 
 const statusLabel = (status: string) => {
   const map: Record<string, string> = {
@@ -82,6 +92,7 @@ const scrollListSx = {
 
 export const SettingsSupportSection = () => {
   const { showNotice } = useSettingsNotice();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [sanctions, setSanctions] = useState<MySanction[]>([]);
   const [appeals, setAppeals] = useState<PlatformAppeal[]>([]);
@@ -91,6 +102,9 @@ export const SettingsSupportSection = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [focusMessageId, setFocusMessageId] = useState<number | null>(null);
+  const [highlightSanctionId, setHighlightSanctionId] = useState<number | null>(null);
+  const [highlightAppealId, setHighlightAppealId] = useState<number | null>(null);
   const [reply, setReply] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
   const [appealSanctionId, setAppealSanctionId] = useState<number | ''>('');
@@ -149,6 +163,77 @@ export const SettingsSupportSection = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Deep-link from notifications: ?ticket=&message= | ?sanction= | ?appeal= | ?panel=
+  useEffect(() => {
+    if (isLoading) return;
+
+    const ticketId = parsePositiveInt(searchParams.get('ticket'));
+    const messageId = parsePositiveInt(searchParams.get('message'));
+    const sanctionId = parsePositiveInt(searchParams.get('sanction'));
+    const appealId = parsePositiveInt(searchParams.get('appeal'));
+    const panel = searchParams.get('panel') as PanelKey | null;
+    const hasFocusIntent = Boolean(ticketId || sanctionId || appealId || panel);
+    if (!hasFocusIntent) return;
+
+    setOpenPanels((prev) => {
+      const next = { ...prev, new: false };
+      if (ticketId || panel === 'questions') next.questions = true;
+      if (sanctionId || panel === 'sanctions') next.sanctions = true;
+      if (appealId || panel === 'appeals') next.appeals = true;
+      if (panel === 'appeal') next.appeal = true;
+      if (panel === 'new') next.new = true;
+      return next;
+    });
+
+    if (ticketId && tickets.some((t) => t.id === ticketId)) {
+      setActiveId(ticketId);
+      if (messageId) setFocusMessageId(messageId);
+    }
+
+    if (sanctionId && sanctions.some((s) => s.id === sanctionId)) {
+      setHighlightSanctionId(sanctionId);
+    }
+
+    if (appealId && appeals.some((a) => a.id === appealId)) {
+      setHighlightAppealId(appealId);
+    }
+
+    setSearchParams({}, { replace: true });
+  }, [isLoading, tickets, sanctions, appeals, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (focusMessageId == null || !openPanels.questions) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`support-message-${focusMessageId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [focusMessageId, activeId, openPanels.questions]);
+
+  useEffect(() => {
+    if (highlightSanctionId == null || !openPanels.sanctions) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`support-sanction-${highlightSanctionId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [highlightSanctionId, openPanels.sanctions]);
+
+  useEffect(() => {
+    if (highlightAppealId == null || !openPanels.appeals) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`support-appeal-${highlightAppealId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [highlightAppealId, openPanels.appeals]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -298,6 +383,7 @@ export const SettingsSupportSection = () => {
               {tickets.map((ticket) => (
                 <Box
                   key={ticket.id}
+                  id={`support-ticket-${ticket.id}`}
                   onClick={() => setActiveId(ticket.id)}
                   sx={{
                     p: 1.25,
@@ -306,6 +392,7 @@ export const SettingsSupportSection = () => {
                     bgcolor: 'rgba(0,0,0,0.2)',
                     border: '1px solid',
                     borderColor: activeId === ticket.id ? 'rgba(142,123,255,0.45)' : 'rgba(255,255,255,0.06)',
+                    boxShadow: activeId === ticket.id ? focusGlow : undefined,
                   }}
                 >
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -329,11 +416,13 @@ export const SettingsSupportSection = () => {
                 {active.messages.map((msg) => (
                   <Box
                     key={msg.id}
+                    id={`support-message-${msg.id}`}
                     sx={{
                       p: 1.25,
                       borderRadius: 1,
                       bgcolor: msg.isStaff ? 'rgba(142,123,255,0.12)' : 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: focusMessageId === msg.id ? focusBorder : '1px solid rgba(255,255,255,0.06)',
+                      boxShadow: focusMessageId === msg.id ? focusGlow : undefined,
                     }}
                   >
                     <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', mb: 0.5 }}>
@@ -394,15 +483,19 @@ export const SettingsSupportSection = () => {
             <Box sx={scrollListSx}>
               {sanctions.map((s) => {
                 const canAppeal = s.status === 'active' && s.type !== 'warning' && !openSanctionIds.has(s.id);
+                const focused = highlightSanctionId === s.id;
                 return (
                   <Box
                     key={s.id}
+                    id={`support-sanction-${s.id}`}
                     sx={{
                       p: 1.5,
                       borderRadius: 1,
                       bgcolor: s.status === 'active' ? 'rgba(183,28,28,0.12)' : 'rgba(0,0,0,0.2)',
-                      border: '1px solid',
-                      borderColor: s.status === 'active' ? 'rgba(255,138,128,0.28)' : 'rgba(255,255,255,0.06)',
+                      border: focused
+                        ? focusBorder
+                        : `1px solid ${s.status === 'active' ? 'rgba(255,138,128,0.28)' : 'rgba(255,255,255,0.06)'}`,
+                      boxShadow: focused ? focusGlow : undefined,
                     }}
                   >
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -542,11 +635,13 @@ export const SettingsSupportSection = () => {
               {appeals.map((a) => (
                 <Box
                   key={a.id}
+                  id={`support-appeal-${a.id}`}
                   sx={{
                     p: 1.25,
                     borderRadius: 1,
                     bgcolor: 'rgba(0,0,0,0.2)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: highlightAppealId === a.id ? focusBorder : '1px solid rgba(255,255,255,0.06)',
+                    boxShadow: highlightAppealId === a.id ? focusGlow : undefined,
                   }}
                 >
                   <Chip size="small" label={appealStatusLabel(a.status)} sx={{ color: '#fff', mb: 0.75 }} />

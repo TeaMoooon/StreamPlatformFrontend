@@ -48,7 +48,9 @@ export const useNotificationHub = (enabled: boolean) => {
 
       if (isSanction || isAppeal || isSupport) {
         const alertType: AlertType = isSanction ? 'warning' : 'info';
-        showAlertRef.current(mapped.message, alertType, mapped.title);
+        // Generic toast titles — specific wording lives in the message body.
+        const toastTitle = isSanction ? 'Внимание' : 'Уведомление';
+        showAlertRef.current(mapped.message, alertType, toastTitle, mapped.link || undefined);
       }
     });
 

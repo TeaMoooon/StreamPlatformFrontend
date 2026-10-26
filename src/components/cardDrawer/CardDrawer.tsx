@@ -4,6 +4,8 @@ import { useDrawer } from '../../context/DrawerContext';
 import { CardDrawerBoxWatch, CardDrawerContainer } from './StyledCardDrawer';
 import { CardTypography } from '../StylesComponents';
 import { getStreamersLeagueLabel } from '../../utils/streamersLeague';
+import { DEFAULT_AVATAR } from '../../constants/defaultAvatars';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 
 export type CardDrawerItem = {
   nickname: string;
@@ -11,12 +13,6 @@ export type CardDrawerItem = {
   isOnline?: boolean;
   streamersLeague?: string | null;
   streamName?: string | null;
-};
-
-const mediaUrl = (path?: string | null) => {
-  if (!path) return '/default-avatar.jpg';
-  if (path.startsWith('http') || path.startsWith('./') || path.startsWith('/default')) return path;
-  return `${process.env.REACT_APP_API_LOCAL}${path}`;
 };
 
 interface ICardDrawerProps {
@@ -29,7 +25,7 @@ export const CardDrawer = ({ card, variant = 'full' }: ICardDrawerProps) => {
   const navigate = useNavigate();
   const { setOpen } = useDrawer();
 
-  const avatarSrc = mediaUrl(profileImage);
+  const avatarSrc = resolveMediaUrl(profileImage) || DEFAULT_AVATAR;
   const title = streamName?.trim() || nickname;
   const tooltip = streamName?.trim() ? `${nickname} — ${streamName}` : nickname;
   const leagueLabel = getStreamersLeagueLabel(streamersLeague);

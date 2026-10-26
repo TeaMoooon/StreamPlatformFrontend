@@ -6,7 +6,6 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { DashboardMode } from '../dashboard.constants';
 import { STREAM_LANGUAGE_OPTIONS, useStreamDashboardSettings } from '../../../hooks/useStreamDashboardSettings';
-import { DashboardSaveNotice } from '../components/DashboardSaveNotice';
 import { DashboardIngestPanel } from '../components/DashboardIngestPanel';
 import { DashboardStreamingBanBanner } from '../components/DashboardStreamingBanBanner';
 import { DashboardStreamPreviewField } from '../components/DashboardStreamPreviewField';
@@ -34,17 +33,8 @@ const fieldSx = {
 };
 
 export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickname: string; mode: DashboardMode }) => {
-  const {
-    settings,
-    categories,
-    canManageStream,
-    isLoading,
-    error,
-    actionError,
-    isSaving,
-    saveSettings,
-    uploadPreview,
-  } = useStreamDashboardSettings(channelNickname, mode);
+  const { settings, categories, canManageStream, isLoading, error, isSaving, saveSettings, uploadPreview } =
+    useStreamDashboardSettings(channelNickname, mode);
 
   const [streamName, setStreamName] = useState('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
@@ -53,7 +43,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
   const [newTag, setNewTag] = useState('');
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [liveDuration, setLiveDuration] = useState('');
   const ingest = useStreamIngest(mode === 'own');
   const { showAlert } = useHeaderModal();
@@ -68,8 +57,8 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
     }
     if (ingest.streamingBlocked && !wasBlockedRef.current) {
       const reason = ingest.blockReason ? ` Причина: ${ingest.blockReason}` : '';
-      const type = ingest.blockType ? sanctionTypeLabel(ingest.blockType) : 'бан стрима';
-      showAlert(`Эфир запрещён.${reason}`, 'warning', `Наказание: ${type}`);
+      const type = ingest.blockType ? sanctionTypeLabel(ingest.blockType) : 'Бан стрима';
+      showAlert(`Эфир запрещён.${reason}`, 'warning', type, '/settings/support?panel=sanctions');
     }
     wasBlockedRef.current = ingest.streamingBlocked;
   }, [mode, ingest.streamingBlocked, ingest.blockReason, ingest.blockType, showAlert]);
@@ -98,11 +87,10 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
     e.preventDefault();
     if (!settings) return;
 
-    setSaveNotice(null);
-
     if (previewFile) {
       const previewResult = await uploadPreview(previewFile);
       if (!previewResult.success) {
+        showAlert(previewResult.message || 'Не удалось загрузить превью', 'error');
         return;
       }
       setPreviewFile(null);
@@ -115,7 +103,7 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
       tags,
     });
 
-    setSaveNotice(ok ? 'Настройки эфира сохранены' : null);
+    showAlert(ok ? 'Настройки эфира сохранены' : 'Не удалось сохранить настройки эфира', ok ? 'success' : 'error');
   };
 
   const addTag = () => {
@@ -224,11 +212,6 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
         </Box>
       </Box>
 
-      <DashboardSaveNotice message={saveNotice} onClose={() => setSaveNotice(null)} />
-      {actionError && !saveNotice && (
-        <DashboardSaveNotice message={actionError} severity="error" onClose={() => undefined} />
-      )}
-
       <Box sx={{ ...panelSx, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <DashboardStreamPreviewField
           currentUrl={settings?.previewUrl}
@@ -282,7 +265,7 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
               />
             ))}
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             <TextField
               size="small"
               placeholder="Новый тег"
@@ -294,7 +277,7 @@ export const DashboardStreamSection = ({ channelNickname, mode }: { channelNickn
                   addTag();
                 }
               }}
-              sx={{ ...fieldSx, flex: 1 }}
+              sx={{ ...fieldSx, flex: '1 1 160px', minWidth: 0 }}
             />
             <Button type="button" variant="outlined" onClick={addTag} sx={{ textTransform: 'none', color: '#fff' }}>
               Добавить

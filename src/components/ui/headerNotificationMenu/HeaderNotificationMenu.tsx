@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAppSelector } from '../../../hooks/redux';
 import { useDispatch } from 'react-redux';
 // store
@@ -28,8 +28,6 @@ const REFRESH_MS = 45_000;
 
 export const HeaderNotificationMenu = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const open = Boolean(anchorEl);
   const notifications = useAppSelector(selectAllNotificationsUnified);
@@ -58,25 +56,23 @@ export const HeaderNotificationMenu = () => {
   };
 
   const handleClose = () => {
-    if (selectedIds.length > 0) {
-      dispatch(notificationMarkRead(selectedIds));
-      setSelectedIds([]);
-    }
     setAnchorEl(null);
   };
 
-  const handleNotificationClick = (link: string, id: number) => {
-    handleMarkAsRead(id);
-    navigate(link.startsWith('/') ? link : `/${link}`);
+  const markRead = (id: number) => {
+    dispatch(MarkAsRead([id]));
+    dispatch(notificationMarkRead([id]));
+  };
+
+  const handleNotificationActivate = (notification: INotificationUnified) => {
+    markRead(notification.id);
     handleClose();
   };
 
-  const handleMarkAsRead = (id: number) => {
-    setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev;
-      return [...prev, id];
-    });
-    dispatch(MarkAsRead([id]));
+  const handleMarkAsReadClick = (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    markRead(id);
   };
 
   const handleMarkAllRead = () => {
@@ -109,43 +105,66 @@ export const HeaderNotificationMenu = () => {
         }}
       >
         {notifications.length > 0 ? (
-          notifications.map((notification: INotificationUnified) => (
-            <MenuItem
-              sx={{
-                display: 'grid',
-                gridTemplateAreas: `'icon title time check' 'icon message message check'`,
-                gridTemplateColumns: 'auto 1fr auto auto',
-                gap: '5px 10px',
-                justifyContent: 'normal',
-              }}
-              key={notification.id}
-              onClick={() => handleNotificationClick(notification.link || '/', notification.id)}
-            >
-              <notification.icon sx={{ gridArea: 'icon' }} />
-              <Box sx={{ gridArea: 'title' }}>{notification.title}</Box>
-              <Box sx={{ gridArea: 'message' }}>{notification.message}</Box>
-              <Box sx={{ gridArea: 'time', fontSize: '10px', gridColumn: 'span 1' }}>
-                {formatDate(new Date(notification?.date))}
-              </Box>
-              {notification.isRead ? (
-                <IconButton sx={{ gridArea: 'check', color: 'var(--white)' }}>
-                  <DoneAllIcon />
-                </IconButton>
-              ) : (
-                <IconButton
-                  sx={{ gridArea: 'check', color: 'var(--color-link)' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkAsRead(notification.id);
-                  }}
-                >
-                  <CheckIcon />
-                </IconButton>
-              )}
-            </MenuItem>
-          ))
+          notifications.map((notification: INotificationUnified) => {
+            const to = notification.link?.startsWith('/') ? notification.link : `/${notification.link || ''}`;
+            return (
+              <MenuItem
+                component={Link}
+                to={to || '/'}
+                sx={{
+                  display: 'grid',
+                  gridTemplateAreas: `'icon title time check' 'icon message message check'`,
+                  gridTemplateColumns: 'auto 1fr auto auto',
+                  gap: '5px 10px',
+                  justifyContent: 'normal',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  whiteSpace: 'normal',
+                  alignItems: 'start',
+                }}
+                key={notification.id}
+                onClick={() => handleNotificationActivate(notification)}
+              >
+                <notification.icon sx={{ gridArea: 'icon', mt: 0.25 }} />
+                <Box sx={{ gridArea: 'title', fontWeight: 600 }}>{notification.title}</Box>
+                <Box sx={{ gridArea: 'message', fontSize: 13, opacity: 0.85 }}>{notification.message}</Box>
+                <Box sx={{ gridArea: 'time', fontSize: '10px', gridColumn: 'span 1' }}>
+                  {formatDate(new Date(notification?.date))}
+                </Box>
+                {notification.isRead ? (
+                  <Box
+                    component="span"
+                    sx={{ gridArea: 'check', color: 'var(--white)', display: 'inline-flex', p: 0.5 }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <DoneAllIcon fontSize="small" />
+                  </Box>
+                ) : (
+                  <Box
+                    component="span"
+                    role="button"
+                    aria-label="Отметить прочитанным"
+                    sx={{
+                      gridArea: 'check',
+                      color: 'var(--color-link)',
+                      display: 'inline-flex',
+                      p: 0.5,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                    }}
+                    onClick={(e) => handleMarkAsReadClick(e, notification.id)}
+                  >
+                    <CheckIcon fontSize="small" />
+                  </Box>
+                )}
+              </MenuItem>
+            );
+          })
         ) : (
-          <MenuItem>Уведомлений нет</MenuItem>
+          <MenuItem disabled>Уведомлений нет</MenuItem>
         )}
         {notifications.length > 0 && [
           <PaginationComponent

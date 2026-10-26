@@ -3,12 +3,9 @@ import { Box, Chip, Divider, Typography } from '@mui/material';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import { IStream } from '../../../../types/share';
 import { getStreamLanguageLabel } from '../../../../constants/streamLanguage.constants';
+import { resolveMediaUrl } from '../../../../utils/resolveMediaUrl';
 
-const mediaUrl = (path?: string | null) => {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  return `${process.env.REACT_APP_API_LOCAL}${path}`;
-};
+const mediaUrl = (path?: string | null) => resolveMediaUrl(path) || undefined;
 
 const CategoryCover = ({ name, imageUrl }: { name: string; imageUrl?: string }) => {
   const [failed, setFailed] = useState(false);

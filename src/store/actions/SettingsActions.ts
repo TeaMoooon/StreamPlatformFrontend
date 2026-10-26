@@ -13,17 +13,17 @@ const { SettingsSliceFetch, SettingsSliceError, SettingsSliceSuccess } = Setting
 export const changeProfileData = (data: FormData) => async (dispatch: AppDispatch) => {
   const token = await ensureAccessToken();
   if (!token) return { success: false, message: 'Вы не авторизованы' };
-  return handleApiRequest(
-    `${process.env.REACT_APP_API_SETTINGS}/profile`,
-    {
-      method: 'PUT',
-      credentials: 'include',
-      headers: sessionAuthHeaders(),
-      body: data,
-    },
-    dispatch,
-    () => dispatch(userProfile())
-  );
+  const result = await handleApiRequest(`${process.env.REACT_APP_API_SETTINGS}/profile`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: sessionAuthHeaders(),
+    body: data,
+  });
+  // Refresh profile after upload so Avatar picks up the new unique /media/... URL.
+  if (result.success) {
+    await dispatch(userProfile());
+  }
+  return result;
 };
 
 export const postStreamKey = () => async (dispatch: AppDispatch, getState: () => RootState) => {
