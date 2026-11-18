@@ -3,15 +3,25 @@ import { handleApiRequest } from '../utils/handleApiRequest';
 
 const apiLocal = () => process.env.REACT_APP_API_LOCAL;
 
-export type StaffRole = 'User' | 'Support' | 'Moderator' | 'Admin' | 'SuperAdmin';
+export type StaffRole = 'User' | 'Support' | 'SupportLead' | 'Safety' | 'SafetyLead' | 'Admin' | 'Owner';
 
 export const STAFF_ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
   { value: 'User', label: 'User (обычный)' },
   { value: 'Support', label: 'Support' },
-  { value: 'Moderator', label: 'Moderator (T&S)' },
+  { value: 'SupportLead', label: 'Support · руководитель' },
+  { value: 'Safety', label: 'Safety' },
+  { value: 'SafetyLead', label: 'Safety · руководитель' },
   { value: 'Admin', label: 'Admin' },
-  { value: 'SuperAdmin', label: 'SuperAdmin' },
+  { value: 'Owner', label: 'Owner' },
 ];
+
+/** Normalize legacy role strings from older JWT / API payloads. */
+export const normalizeStaffRole = (role: string | null | undefined): string => {
+  if (!role) return 'User';
+  if (role === 'Moderator') return 'Safety';
+  if (role === 'SuperAdmin') return 'Owner';
+  return role;
+};
 
 export type StaffUserSearch = {
   id: number;

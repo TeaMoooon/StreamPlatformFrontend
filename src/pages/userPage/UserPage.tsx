@@ -80,7 +80,16 @@ export const UserPage: FC = appLayout(() => {
             }
           />
         )}
-        <UserBanner userData={userData} isNotProfileData={isNotProfileData} isLive={isLive} />
+        <UserBanner
+          userData={userData}
+          isNotProfileData={isNotProfileData}
+          isLive={isLive}
+          liveStream={
+            isLive && currentStream?.streamId
+              ? { streamId: currentStream.streamId, streamName: currentStream.streamName }
+              : null
+          }
+        />
         {!isLive && <UserAbout userData={userData} />}
       </ContentWrapperSwitch>
     </ContainerBox>

@@ -4,7 +4,7 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { Socials } from '../../../../components/socials/Socials';
 import { BannerEffect } from '../../../../components/ui/bannerEffect/BannerEffect';
-import { ReportDialog } from '../../../../components/report/ReportDialog';
+import { ReportDialog, ReportLiveStreamInfo } from '../../../../components/report/ReportDialog';
 import { deleteSubscribe, streamerFolows, subscribeToUser } from '../../../../store/actions/SubscribersActions';
 import { useAppSelector } from '../../../../hooks/redux';
 import { useHeaderModal } from '../../../../context/HeaderModalContext';
@@ -80,9 +80,11 @@ type UserBannerProps = {
   userData: IProfile | null;
   isNotProfileData: boolean;
   isLive?: boolean;
+  /** When live — report wizard can target stream or profile */
+  liveStream?: ReportLiveStreamInfo | null;
 };
 
-export const UserBanner = ({ userData, isNotProfileData, isLive = false }: UserBannerProps) => {
+export const UserBanner = ({ userData, isNotProfileData, isLive = false, liveStream = null }: UserBannerProps) => {
   const { isAuth, data: currentUser } = useAppSelector((state) => state.user);
   const { showAlert } = useHeaderModal();
 
@@ -171,13 +173,14 @@ export const UserBanner = ({ userData, isNotProfileData, isLive = false }: UserB
   const reportDialog = userData?.id ? (
     <ReportDialog
       open={reportOpen}
-      title="Пожаловаться на канал"
+      title={isLive ? 'Пожаловаться' : 'Пожаловаться на канал'}
       subtitle={userData.nickname}
       payload={{
         targetType: 'channel',
         targetUserId: userData.id,
         streamerId: userData.id,
       }}
+      liveStream={isLive ? liveStream : null}
       onClose={() => setReportOpen(false)}
     />
   ) : null;

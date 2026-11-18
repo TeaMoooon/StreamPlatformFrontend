@@ -95,10 +95,11 @@ export const DashboardShell = ({
                 ? {
                     flexDirection: 'row',
                     flexWrap: 'nowrap',
-                    overflowX: 'auto',
-                    gap: 1,
-                    WebkitOverflowScrolling: 'touch',
-                    pb: 0.5,
+                    gap: 0.75,
+                    p: 0.5,
+                    borderRadius: 2,
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
                   }
                 : undefined
             }
@@ -111,15 +112,23 @@ export const DashboardShell = ({
                 sx={
                   isMobile
                     ? {
-                        flex: '1 0 auto',
-                        minWidth: 'max-content',
-                        padding: '10px 14px',
+                        flex: '1 1 0',
+                        minWidth: 0,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '10px 8px',
                         gap: 0,
+                        borderRadius: 1.5,
+                        textAlign: 'center',
                       }
                     : undefined
                 }
               >
-                <StyledDashboardNavTitle>{item.title}</StyledDashboardNavTitle>
+                <StyledDashboardNavTitle
+                  sx={isMobile ? { fontSize: 13, width: '100%', textAlign: 'center' } : undefined}
+                >
+                  {item.title}
+                </StyledDashboardNavTitle>
                 {!isMobile && <StyledDashboardNavDescription>{item.description}</StyledDashboardNavDescription>}
               </StyledDashboardNavItem>
             ))}

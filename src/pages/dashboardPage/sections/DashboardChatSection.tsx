@@ -61,7 +61,8 @@ const formatDate = (value: string) => {
 
 const ACTION_LABELS: Record<string, string> = {
   Delete: 'Удалил сообщение',
-  Timeout: 'Таймаут',
+  Timeout: 'Мут',
+  ClearTimeout: 'Снял мут',
   Ban: 'Бан',
   Unban: 'Разбан',
   SlowMode: 'Slow mode',
@@ -346,10 +347,12 @@ export const DashboardChatSection = ({ channelNickname, mode }: { channelNicknam
         <DashboardBlock
           icon={<BlockOutlinedIcon sx={{ fontSize: 18, color: '#ff8a8a' }} />}
           title="Модерация и баны"
-          hint={`Забанено: ${bans.length}`}
+          hint={`Банов: ${bans.length}. Мут снимается в чате → Снять мут`}
         >
           {bans.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Список банов пуст.</Typography>
+            <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+              Постоянных банов нет. Активный мут снимайте в чате по нику: «Снять мут».
+            </Typography>
           ) : (
             <Box sx={{ ...SCROLL_BOX_SX, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
               {bans.map((ban) => (

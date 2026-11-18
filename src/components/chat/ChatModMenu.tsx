@@ -128,7 +128,17 @@ export const ChatModMenu = ({
               sx={{ ...modMenuItemSx }}
             >
               <TimerOffOutlinedIcon sx={{ fontSize: 18 }} />
-              Timeout
+              Мут
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onTimeout(msg.userId, 0);
+                handleClose();
+              }}
+              sx={{ ...modMenuItemSx, color: '#6fff79', '& .MuiSvgIcon-root': { color: '#6fff79' } }}
+            >
+              <HowToRegOutlinedIcon sx={{ fontSize: 18 }} />
+              Снять мут
             </MenuItem>
             {isBanned && onUnban ? (
               <MenuItem
@@ -172,11 +182,21 @@ export const ChatModMenu = ({
             paper: {
               sx: {
                 ...modMenuPaperSx,
-                minWidth: 120,
+                minWidth: 140,
               },
             },
           }}
         >
+          <MenuItem
+            onClick={() => {
+              onTimeout(msg.userId, 0);
+              handleClose();
+            }}
+            sx={{ ...modMenuItemSx, gap: 0, color: '#6fff79' }}
+          >
+            Снять мут
+          </MenuItem>
+          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', my: 0.5 }} />
           {CHAT_TIMEOUT_PRESETS.map(({ seconds, label }) => (
             <MenuItem
               key={seconds}
@@ -196,7 +216,7 @@ export const ChatModMenu = ({
         <ReportDialog
           open={reportOpen}
           title="Пожаловаться на сообщение"
-          subtitle={`${msg.username}: ${msg.text?.slice(0, 120) || '…'}`}
+          subtitle={msg.username}
           payload={{
             targetType: 'message',
             targetUserId: msg.userId,

@@ -385,7 +385,8 @@ export const VideoPlayer = ({
     };
     const onPause = () => {
       setIsPlaying(false);
-      if (mode === 'live') hlsRef.current?.stopLoad();
+      // Live: keep loading segments while paused. stopLoad() left the UI stuck on
+      // the loading bar after autoplay-block / brief pause (2026-11-04).
     };
     const onWaiting = () => {
       if (isSwitchingLevelRef.current) return;

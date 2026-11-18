@@ -10,7 +10,16 @@ export const appLayout = (PageComponent: () => JSX.Element, header = true, foote
       <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
         <Sidebar />
         <DrawerComponent />
-        <Box sx={{ display: 'flex', flex: 1, background: 'transparent', flexDirection: 'column', width: '100%' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            background: 'transparent',
+            flexDirection: 'column',
+            width: '100%',
+            minWidth: 0,
+          }}
+        >
           {header && <Header />}
           <PageComponent {...props} />
         </Box>

@@ -113,7 +113,7 @@ const StaffShell = ({ activeSection, permissions, role }: StaffShellProps) => {
                   Жалоба пришла с сайта — раздел «Жалобы». Вопрос про ключ/аккаунт — «Вопросы в поддержку».
                 </>
               ) : (
-                <>Вы в поддержке: отвечайте на вопросы пользователей. Баны выдают модераторы в разделе «Мут и бан».</>
+                <>Вы в Support: отвечайте на вопросы пользователей. Баны выдаёт Safety в разделе «Мут и бан».</>
               )}
             </Typography>
             <StaffStatsStrip canModeratePlatform={permissions.canModeratePlatform} />

@@ -26,12 +26,31 @@ export const Header = () => {
         <Button onClick={() => setOpen(!open)} sx={{ display: isMobile ? 'flex' : 'none' }}>
           <MenuIcon sx={{ color: 'var(--white)' }}></MenuIcon>
         </Button>
-        <Box sx={{ display: 'flex', justifyContent: 'space-beetwen', width: '100%' }}>
-          {isMobile ? <></> : <Logo />}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            minWidth: 0,
+            gap: isMobile ? 0.5 : 2,
+          }}
+        >
+          {isMobile ? null : <Logo />}
 
           <StyleHeaderBlock>
-            <SearchInput width={'min(360px, 42vw)'} />
-            {isAuth ? <HeaderNotificationMenu /> : <></>}
+            <Box
+              sx={{
+                flex: isMobile ? '1 1 auto' : '0 0 auto',
+                minWidth: 0,
+                width: isMobile ? '100%' : 'auto',
+                display: 'flex',
+                justifyContent: isMobile ? 'center' : 'flex-end',
+              }}
+            >
+              <SearchInput width={isMobile ? '100%' : 'min(360px, 42vw)'} />
+            </Box>
+            {isAuth ? <HeaderNotificationMenu /> : null}
             <HeaderMenuAvatar />
           </StyleHeaderBlock>
         </Box>

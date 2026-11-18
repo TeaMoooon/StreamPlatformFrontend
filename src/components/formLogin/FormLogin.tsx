@@ -73,7 +73,12 @@ export const FormLogin = ({
       setErrorMessage(result.message || RATE_LIMIT_MESSAGE);
       return;
     }
-    setErrorMessage('Неверный логин или пароль.');
+    if (result.status === 403) {
+      setErrorMessage(result.message || 'Аккаунт заблокирован');
+      return;
+    }
+    // 401 = wrong credentials; do not leak whether the account exists.
+    setErrorMessage(result.status === 401 ? 'Неверный логин или пароль.' : result.message || 'Не удалось войти.');
   };
 
   return (

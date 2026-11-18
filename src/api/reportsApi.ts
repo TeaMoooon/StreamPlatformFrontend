@@ -2,13 +2,52 @@ import { authHeaders } from './httpClient';
 import { handleApiRequest } from '../utils/handleApiRequest';
 
 export type ReportTargetType = 'user' | 'message' | 'channel' | 'stream';
-export type ReportReason = 'spam' | 'harassment' | 'hate' | 'illegal' | 'other';
+
+export type ReportReason =
+  | 'child_safety'
+  | 'terrorism'
+  | 'violence'
+  | 'sexual'
+  | 'self_harm'
+  | 'harassment'
+  | 'hate'
+  | 'spam'
+  | 'wrong_category'
+  | 'other'
+  /** Legacy — old reports may still have this value */
+  | 'illegal';
+
 export type ReportStatus = 'new' | 'in_progress' | 'resolved' | 'rejected';
+
+/** Shared UI / staff labels for report reasons. */
+export const REPORT_REASON_TITLE: Record<ReportReason, string> = {
+  child_safety: 'Жестокое обращение с детьми',
+  terrorism: 'Терроризм',
+  violence: 'Насилие или чрезмерная жестокость',
+  sexual: 'Нагота или сексуальный контент',
+  self_harm: 'Самоповреждение или опасные действия',
+  harassment: 'Травля или притеснение',
+  hate: 'Разжигание ненависти',
+  spam: 'Спам, мошенничество или боты',
+  wrong_category: 'Неверная категория контента',
+  other: 'Другое',
+  illegal: 'Угрозы или запрещённый контент',
+};
+
+export type PlatformReportReporter = {
+  id: number;
+  reporterUserId: number;
+  reporterNickname?: string | null;
+  details?: string | null;
+  createdAt: string;
+};
 
 export type PlatformReport = {
   id: number;
   reporterUserId: number;
   reporterNickname?: string | null;
+  reporterCount: number;
+  reporters: PlatformReportReporter[];
   targetType: ReportTargetType | string;
   targetUserId?: number | null;
   targetNickname?: string | null;
@@ -40,39 +79,53 @@ export type CreateReportPayload = {
   details?: string;
 };
 
-export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string }[] = [
-  { value: 'spam', label: 'Спам' },
-  { value: 'harassment', label: 'Оскорбления / травля' },
-  { value: 'hate', label: 'Разжигание ненависти' },
-  { value: 'illegal', label: 'Незаконный контент' },
-  { value: 'other', label: 'Другое' },
-];
+export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string }[] = (
+  Object.entries(REPORT_REASON_TITLE) as [ReportReason, string][]
+)
+  .filter(([value]) => value !== 'illegal')
+  .map(([value, label]) => ({ value, label }));
 
 const apiLocal = () => process.env.REACT_APP_API_LOCAL;
 
-const normalizeReport = (raw: Record<string, unknown>): PlatformReport => ({
+const normalizeReporter = (raw: Record<string, unknown>): PlatformReportReporter => ({
   id: Number(raw.id ?? raw.Id ?? 0),
   reporterUserId: Number(raw.reporterUserId ?? raw.ReporterUserId ?? 0),
   reporterNickname: (raw.reporterNickname ?? raw.ReporterNickname ?? null) as string | null,
-  targetType: String(raw.targetType ?? raw.TargetType ?? ''),
-  targetUserId: (raw.targetUserId ?? raw.TargetUserId ?? null) as number | null,
-  targetNickname: (raw.targetNickname ?? raw.TargetNickname ?? null) as string | null,
-  messageId: (raw.messageId ?? raw.MessageId ?? null) as string | null,
-  messageSnapshot: (raw.messageSnapshot ?? raw.MessageSnapshot ?? null) as string | null,
-  streamerId: (raw.streamerId ?? raw.StreamerId ?? null) as number | null,
-  streamerNickname: (raw.streamerNickname ?? raw.StreamerNickname ?? null) as string | null,
-  streamId: (raw.streamId ?? raw.StreamId ?? null) as number | null,
-  reason: String(raw.reason ?? raw.Reason ?? ''),
   details: (raw.details ?? raw.Details ?? null) as string | null,
-  status: String(raw.status ?? raw.Status ?? ''),
-  assigneeUserId: (raw.assigneeUserId ?? raw.AssigneeUserId ?? null) as number | null,
-  assigneeNickname: (raw.assigneeNickname ?? raw.AssigneeNickname ?? null) as string | null,
-  resolutionNote: (raw.resolutionNote ?? raw.ResolutionNote ?? null) as string | null,
-  linkedSanctionId: (raw.linkedSanctionId ?? raw.LinkedSanctionId ?? null) as number | null,
   createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ''),
-  updatedAt: String(raw.updatedAt ?? raw.UpdatedAt ?? ''),
-  resolvedAt: (raw.resolvedAt ?? raw.ResolvedAt ?? null) as string | null,
 });
+
+const normalizeReport = (raw: Record<string, unknown>): PlatformReport => {
+  const reportersRaw = (raw.reporters ?? raw.Reporters ?? []) as Record<string, unknown>[];
+  const reporters = Array.isArray(reportersRaw) ? reportersRaw.map(normalizeReporter) : [];
+  const reporterCount = Number(raw.reporterCount ?? raw.ReporterCount ?? reporters.length ?? 1);
+
+  return {
+    id: Number(raw.id ?? raw.Id ?? 0),
+    reporterUserId: Number(raw.reporterUserId ?? raw.ReporterUserId ?? 0),
+    reporterNickname: (raw.reporterNickname ?? raw.ReporterNickname ?? null) as string | null,
+    reporterCount: reporterCount > 0 ? reporterCount : Math.max(reporters.length, 1),
+    reporters,
+    targetType: String(raw.targetType ?? raw.TargetType ?? ''),
+    targetUserId: (raw.targetUserId ?? raw.TargetUserId ?? null) as number | null,
+    targetNickname: (raw.targetNickname ?? raw.TargetNickname ?? null) as string | null,
+    messageId: (raw.messageId ?? raw.MessageId ?? null) as string | null,
+    messageSnapshot: (raw.messageSnapshot ?? raw.MessageSnapshot ?? null) as string | null,
+    streamerId: (raw.streamerId ?? raw.StreamerId ?? null) as number | null,
+    streamerNickname: (raw.streamerNickname ?? raw.StreamerNickname ?? null) as string | null,
+    streamId: (raw.streamId ?? raw.StreamId ?? null) as number | null,
+    reason: String(raw.reason ?? raw.Reason ?? ''),
+    details: (raw.details ?? raw.Details ?? null) as string | null,
+    status: String(raw.status ?? raw.Status ?? ''),
+    assigneeUserId: (raw.assigneeUserId ?? raw.AssigneeUserId ?? null) as number | null,
+    assigneeNickname: (raw.assigneeNickname ?? raw.AssigneeNickname ?? null) as string | null,
+    resolutionNote: (raw.resolutionNote ?? raw.ResolutionNote ?? null) as string | null,
+    linkedSanctionId: (raw.linkedSanctionId ?? raw.LinkedSanctionId ?? null) as number | null,
+    createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ''),
+    updatedAt: String(raw.updatedAt ?? raw.UpdatedAt ?? ''),
+    resolvedAt: (raw.resolvedAt ?? raw.ResolvedAt ?? null) as string | null,
+  };
+};
 
 export const createPlatformReport = async (payload: CreateReportPayload) => {
   const result = await handleApiRequest<Record<string, unknown>>(`${apiLocal()}/api/reports`, {
@@ -98,11 +151,13 @@ export const fetchStaffMe = async () => {
   }
 
   const permissions = (result.data.permissions ?? result.data.Permissions ?? {}) as Record<string, unknown>;
+  const rawRole = String(result.data.role ?? result.data.Role ?? '');
+  const role = rawRole === 'Moderator' ? 'Safety' : rawRole === 'SuperAdmin' ? 'Owner' : rawRole;
   return {
     success: true as const,
     userId: Number(result.data.userId ?? result.data.UserId ?? 0),
     nickname: String(result.data.nickname ?? result.data.Nickname ?? ''),
-    role: String(result.data.role ?? result.data.Role ?? ''),
+    role,
     permissions: {
       canAccessStaffPanel: Boolean(permissions.canAccessStaffPanel ?? permissions.CanAccessStaffPanel),
       canManageTickets: Boolean(permissions.canManageTickets ?? permissions.CanManageTickets),
@@ -112,7 +167,7 @@ export const fetchStaffMe = async () => {
   };
 };
 
-export const fetchStaffReports = async (status = 'new', take = 50) => {
+export const fetchStaffReports = async (status = 'open', take = 50) => {
   const qs = new URLSearchParams({ take: String(take) });
   if (status) qs.set('status', status);
   const result = await handleApiRequest<Record<string, unknown>[]>(`${apiLocal()}/api/staff/reports?${qs}`, {

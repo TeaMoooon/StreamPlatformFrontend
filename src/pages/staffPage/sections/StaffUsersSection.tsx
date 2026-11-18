@@ -8,6 +8,7 @@ import {
   StaffUserSearch,
   fetchStaffUser,
   issueStaffSanction,
+  normalizeStaffRole,
   revokeStaffSanction,
   searchStaffUsers,
   setStaffUserRole,
@@ -53,8 +54,12 @@ export const StaffUsersSection = ({ canManageStaffRoles, canModeratePlatform, ac
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const normalizedActorRole = normalizeStaffRole(actorRole);
+  // Owner may grant any role; Admin may only grant User / Support* / Safety*.
   const roleOptions =
-    actorRole === 'SuperAdmin' ? STAFF_ROLE_OPTIONS : STAFF_ROLE_OPTIONS.filter((r) => r.value !== 'SuperAdmin');
+    normalizedActorRole === 'Owner'
+      ? STAFF_ROLE_OPTIONS
+      : STAFF_ROLE_OPTIONS.filter((r) => r.value !== 'Owner' && r.value !== 'Admin');
 
   const onSearch = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -88,7 +93,7 @@ export const StaffUsersSection = ({ canManageStaffRoles, canModeratePlatform, ac
       return;
     }
     setSelected(result.user);
-    setRoleDraft(result.user.role);
+    setRoleDraft(normalizeStaffRole(result.user.role));
     setSanctionReason('');
   };
 
@@ -104,7 +109,7 @@ export const StaffUsersSection = ({ canManageStaffRoles, canModeratePlatform, ac
       return;
     }
     setSelected(result.user);
-    setRoleDraft(result.user.role);
+    setRoleDraft(normalizeStaffRole(result.user.role));
     setUsers((prev) => prev.map((u) => (u.id === result.user.id ? { ...u, role: result.user.role } : u)));
     setNotice('Роль обновлена. Пользователю нужно войти заново, чтобы права применились.');
   };

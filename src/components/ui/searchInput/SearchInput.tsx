@@ -187,7 +187,7 @@ export const SearchInput = ({ width, height }: Props) => {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Поиск каналов и категорий"
+          placeholder="Поиск"
           fullWidth
           size="small"
           InputProps={{
@@ -226,7 +226,9 @@ export const SearchInput = ({ width, height }: Props) => {
               top: 'calc(100% + 8px)',
               left: 0,
               right: 0,
-              minWidth: 320,
+              minWidth: 0,
+              width: '100%',
+              maxWidth: 'min(420px, calc(100vw - 24px))',
               zIndex: 1400,
               borderRadius: 2,
               border: '1px solid rgba(142,123,255,0.22)',

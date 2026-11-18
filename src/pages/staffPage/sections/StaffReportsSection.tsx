@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, Chip, CircularProgress, MenuItem, TextField, Typography } from '@mui/material';
 import { PlatformReport, fetchStaffReports, updateStaffReport } from '../../../api/reportsApi';
-import { SANCTION_DURATION_OPTIONS, STAFF_STALE_HOURS, isStaffQueueStale } from '../../../api/staffApi';
+import {
+  SANCTION_DURATION_OPTIONS,
+  SANCTION_TYPE_OPTIONS,
+  STAFF_STALE_HOURS,
+  isStaffQueueStale,
+} from '../../../api/staffApi';
 import { StyledDashboardSectionHint, StyledDashboardSectionTitle } from '../../dashboardPage/StyledDashboardPage';
 
 const OPEN_STATUSES = ['new', 'in_progress'];
+const DEFAULT_SANCTION_TYPE = 'chat_mute';
+const DEFAULT_SANCTION_DURATION: number | null = 60;
 
 const panelSx = {
   p: 2,
@@ -24,8 +31,7 @@ const fieldSx = {
 };
 
 const STATUS_FILTERS = [
-  { value: 'new', label: 'Новые' },
-  { value: 'in_progress', label: 'В работе' },
+  { value: 'open', label: 'Открытые' },
   { value: 'resolved', label: 'Закрыты (наказали)' },
   { value: 'rejected', label: 'Отклонены (нарушения нет)' },
   { value: '', label: 'Все' },
@@ -50,29 +56,46 @@ const statusLabelRu = (status: string) => {
 
 const reasonLabel = (reason: string) => {
   const map: Record<string, string> = {
-    spam: 'Спам',
-    harassment: 'Оскорбления / травля',
-    hate: 'Ненависть',
-    illegal: 'Запрещённый контент',
+    child_safety: 'Жестокое обращение с детьми',
+    terrorism: 'Терроризм',
+    violence: 'Насилие или чрезмерная жестокость',
+    sexual: 'Нагота или сексуальный контент',
+    self_harm: 'Самоповреждение или опасные действия',
+    harassment: 'Травля или притеснение',
+    hate: 'Разжигание ненависти',
+    spam: 'Спам, мошенничество или боты',
+    wrong_category: 'Неверная категория контента',
     other: 'Другое',
+    illegal: 'Угрозы или запрещённый контент',
   };
-  return map[reason] || reason;
+  return map[reason] ?? reason;
 };
 
-const muteLabel = (minutes: number | null) => {
-  const found = SANCTION_DURATION_OPTIONS.find((o) => o.value === minutes);
-  return found ? `Запретить чат · ${found.label}` : 'Запретить чат';
+const reportsCountLabel = (n: number) => {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${n} жалоба`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} жалобы`;
+  return `${n} жалоб`;
+};
+
+const sanctionActionLabel = (type: string, minutes: number | null) => {
+  const typeLabel = SANCTION_TYPE_OPTIONS.find((o) => o.value === type)?.label || type;
+  if (type === 'warning') return typeLabel;
+  const duration = SANCTION_DURATION_OPTIONS.find((o) => o.value === minutes)?.label;
+  return duration ? `${typeLabel} · ${duration}` : typeLabel;
 };
 
 export const StaffReportsSection = () => {
-  const [status, setStatus] = useState('new');
+  const [status, setStatus] = useState('open');
   const [reports, setReports] = useState<PlatformReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notes, setNotes] = useState<Record<number, string>>({});
-  const [muteDurations, setMuteDurations] = useState<Record<number, number | null>>({});
+  const [sanctionTypes, setSanctionTypes] = useState<Record<number, string>>({});
+  const [sanctionDurations, setSanctionDurations] = useState<Record<number, number | null>>({});
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -91,7 +114,9 @@ export const StaffReportsSection = () => {
     void load();
   }, [load]);
 
-  const getMuteDuration = (reportId: number) => (muteDurations[reportId] === undefined ? 60 : muteDurations[reportId]);
+  const getSanctionType = (reportId: number) => sanctionTypes[reportId] || DEFAULT_SANCTION_TYPE;
+  const getSanctionDuration = (reportId: number) =>
+    sanctionDurations[reportId] === undefined ? DEFAULT_SANCTION_DURATION : sanctionDurations[reportId];
 
   const runUpdate = async (id: number, payload: Parameters<typeof updateStaffReport>[1]) => {
     setBusyId(id);
@@ -118,8 +143,8 @@ export const StaffReportsSection = () => {
       <Box>
         <StyledDashboardSectionTitle>Жалобы с сайта</StyledDashboardSectionTitle>
         <StyledDashboardSectionHint>
-          Жалобы с кнопки «Пожаловаться». Бан стрима и полный бан — в разделе «Мут и бан». Открытые дольше{' '}
-          {STAFF_STALE_HOURS}ч подсвечены.
+          Жалобы с кнопки «Пожаловаться». Открытые — в одном списке; исполнитель ставится при наказании или отклонении.
+          Открытые дольше {STAFF_STALE_HOURS}ч подсвечены.
         </StyledDashboardSectionHint>
       </Box>
 
@@ -149,7 +174,9 @@ export const StaffReportsSection = () => {
       ) : (
         reports.map((report) => {
           const stale = isStaffQueueStale(report.updatedAt || report.createdAt, report.status, OPEN_STATUSES);
-          const muteMinutes = getMuteDuration(report.id);
+          const sanctionType = getSanctionType(report.id);
+          const sanctionMinutes = getSanctionDuration(report.id);
+          const needsDuration = sanctionType !== 'warning';
           return (
             <Box
               key={report.id}
@@ -173,6 +200,14 @@ export const StaffReportsSection = () => {
                   size="small"
                   sx={{ bgcolor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)' }}
                 />
+                <Chip
+                  label={reportsCountLabel(report.reporterCount || 1)}
+                  size="small"
+                  sx={{
+                    bgcolor: report.reporterCount > 1 ? 'rgba(142,123,255,0.22)' : 'rgba(255,255,255,0.06)',
+                    color: report.reporterCount > 1 ? '#cfc5ff' : 'rgba(255,255,255,0.7)',
+                  }}
+                />
                 {stale && (
                   <Chip
                     label="Давно без ответа"
@@ -181,21 +216,62 @@ export const StaffReportsSection = () => {
                   />
                 )}
                 <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-                  #{report.id} · {new Date(report.createdAt).toLocaleString()}
+                  кейс #{report.id} · {new Date(report.createdAt).toLocaleString()}
                 </Typography>
               </Box>
 
               <Typography sx={{ fontSize: 14, color: '#fff' }}>
-                {report.targetType === 'message' ? 'Сообщение' : 'Канал/пользователь'}:{' '}
+                {report.targetType === 'message'
+                  ? 'Сообщение'
+                  : report.targetType === 'stream'
+                    ? 'Стрим'
+                    : report.targetType === 'channel'
+                      ? 'Профиль / канал'
+                      : 'Пользователь'}
+                :{' '}
                 <Box component="span" sx={{ color: '#cfc5ff' }}>
                   {report.targetNickname || report.targetUserId || '—'}
                 </Box>
                 {report.streamerNickname ? ` · канал ${report.streamerNickname}` : ''}
+                {report.streamId ? ` · stream #${report.streamId}` : ''}
               </Typography>
 
-              <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
-                От: {report.reporterNickname || report.reporterUserId}
-              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Кто отправил:</Typography>
+                {(report.reporters.length > 0
+                  ? report.reporters
+                  : [
+                      {
+                        id: 0,
+                        reporterUserId: report.reporterUserId,
+                        reporterNickname: report.reporterNickname,
+                        details: report.details,
+                        createdAt: report.createdAt,
+                      },
+                    ]
+                ).map((reporter) => (
+                  <Box
+                    key={`${report.id}-${reporter.id || reporter.reporterUserId}`}
+                    sx={{
+                      pl: 1.25,
+                      borderLeft: '2px solid rgba(142,123,255,0.35)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.25,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
+                      {reporter.reporterNickname || reporter.reporterUserId}
+                      <Box component="span" sx={{ color: 'rgba(255,255,255,0.35)', ml: 1, fontSize: 12 }}>
+                        {reporter.createdAt ? new Date(reporter.createdAt).toLocaleString() : ''}
+                      </Box>
+                    </Typography>
+                    {reporter.details && (
+                      <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{reporter.details}</Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
 
               {report.messageSnapshot && (
                 <Box
@@ -211,12 +287,6 @@ export const StaffReportsSection = () => {
                 >
                   {report.messageSnapshot}
                 </Box>
-              )}
-
-              {report.details && (
-                <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
-                  Комментарий: {report.details}
-                </Typography>
               )}
 
               {report.linkedSanctionId && (
@@ -236,49 +306,60 @@ export const StaffReportsSection = () => {
                     fullWidth
                   />
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
-                    <Button
-                      size="small"
-                      disabled={busyId === report.id}
-                      onClick={() => runUpdate(report.id, { status: 'in_progress', assignToMe: true })}
-                      sx={{ textTransform: 'none', color: '#fff' }}
-                    >
-                      Взять себе
-                    </Button>
                     <TextField
                       select
                       size="small"
-                      label="На сколько запретить чат"
-                      value={muteMinutes === null ? 'perm' : String(muteMinutes)}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setMuteDurations((prev) => ({
-                          ...prev,
-                          [report.id]: v === 'perm' ? null : Number(v),
-                        }));
-                      }}
+                      label="Наказание"
+                      value={sanctionType}
+                      onChange={(e) => setSanctionTypes((prev) => ({ ...prev, [report.id]: e.target.value }))}
                       disabled={!report.targetUserId}
-                      sx={{ ...fieldSx, minWidth: 180 }}
+                      sx={{ ...fieldSx, minWidth: 220 }}
                     >
-                      {SANCTION_DURATION_OPTIONS.map((opt) => (
-                        <MenuItem key={String(opt.value)} value={opt.value === null ? 'perm' : String(opt.value)}>
-                          {opt.label}
+                      {SANCTION_TYPE_OPTIONS.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label} — {opt.hint}
                         </MenuItem>
                       ))}
                     </TextField>
+                    {needsDuration && (
+                      <TextField
+                        select
+                        size="small"
+                        label="На сколько"
+                        value={sanctionMinutes === null ? 'perm' : String(sanctionMinutes)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSanctionDurations((prev) => ({
+                            ...prev,
+                            [report.id]: v === 'perm' ? null : Number(v),
+                          }));
+                        }}
+                        disabled={!report.targetUserId}
+                        sx={{ ...fieldSx, minWidth: 140 }}
+                      >
+                        {SANCTION_DURATION_OPTIONS.map((opt) => (
+                          <MenuItem key={String(opt.value)} value={opt.value === null ? 'perm' : String(opt.value)}>
+                            {opt.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
                     <Button
                       size="small"
                       disabled={busyId === report.id || !report.targetUserId}
                       onClick={() =>
                         runUpdate(report.id, {
                           status: 'resolved',
-                          resolutionNote: notes[report.id] || `Запрет чата (${muteLabel(muteMinutes)})`,
+                          resolutionNote: notes[report.id] || sanctionActionLabel(sanctionType, sanctionMinutes),
                           assignToMe: true,
                           sanction: report.targetUserId
                             ? {
                                 targetUserId: report.targetUserId,
-                                type: 'chat_mute',
-                                reason: notes[report.id] || `Mute по жалобе #${report.id}`,
-                                durationMinutes: muteMinutes,
+                                type: sanctionType,
+                                reason:
+                                  notes[report.id] ||
+                                  `${sanctionActionLabel(sanctionType, sanctionMinutes)} по жалобе #${report.id}`,
+                                durationMinutes: needsDuration ? sanctionMinutes : null,
                               }
                             : undefined,
                         })
@@ -286,7 +367,9 @@ export const StaffReportsSection = () => {
                       variant="contained"
                       sx={{ textTransform: 'none', bgcolor: '#6d5dfb', '&:hover': { bgcolor: '#8e7bff' } }}
                     >
-                      {muteLabel(muteMinutes)}
+                      {report.targetUserId
+                        ? `Выдать: ${sanctionActionLabel(sanctionType, sanctionMinutes)}`
+                        : 'Нет цели для наказания'}
                     </Button>
                     <Button
                       size="small"
