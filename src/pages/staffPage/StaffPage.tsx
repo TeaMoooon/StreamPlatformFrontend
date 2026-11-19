@@ -53,15 +53,16 @@ const StaffStatsStrip = ({ canModeratePlatform }: { canModeratePlatform: boolean
 
   if (!stats) return null;
 
+  // Support must not see Safety backlog volume they cannot open.
+  const staleCount = canModeratePlatform ? stats.staleReports + stats.staleTickets : stats.staleTickets;
+
   const items = [
     canModeratePlatform ? { label: `Жалоб ждут: ${stats.reportsNew + stats.reportsInProgress}` } : null,
     canModeratePlatform ? { label: `Просьб снять бан: ${stats.appealsOpen}` } : null,
     {
       label: `Вопросов в поддержке: ${stats.ticketsOpen + stats.ticketsInProgress + stats.ticketsWaitingUser}`,
     },
-    stats.staleReports + stats.staleTickets > 0
-      ? { label: `Давно без ответа: ${stats.staleReports + stats.staleTickets}`, warn: true }
-      : null,
+    staleCount > 0 ? { label: `Давно без ответа: ${staleCount}`, warn: true } : null,
   ].filter(Boolean) as { label: string; warn?: boolean }[];
 
   return (
@@ -88,7 +89,10 @@ const StaffShell = ({ activeSection, permissions, role }: StaffShellProps) => {
   const navItems = useMemo(() => getStaffNavItems(permissions.canModeratePlatform), [permissions.canModeratePlatform]);
 
   useEffect(() => {
-    if ((activeSection === 'reports' || activeSection === 'appeals') && !permissions.canModeratePlatform) {
+    if (
+      (activeSection === 'reports' || activeSection === 'appeals' || activeSection === 'users') &&
+      !permissions.canModeratePlatform
+    ) {
       navigate('/staff/tickets', { replace: true });
     }
   }, [activeSection, permissions.canModeratePlatform, navigate]);
@@ -113,7 +117,7 @@ const StaffShell = ({ activeSection, permissions, role }: StaffShellProps) => {
                   Жалоба пришла с сайта — раздел «Жалобы». Вопрос про ключ/аккаунт — «Вопросы в поддержку».
                 </>
               ) : (
-                <>Вы в Support: отвечайте на вопросы пользователей. Баны выдаёт Safety в разделе «Мут и бан».</>
+                <>Вы в Support: отвечайте на вопросы пользователей. Мут и бан выдаёт только Safety.</>
               )}
             </Typography>
             <StaffStatsStrip canModeratePlatform={permissions.canModeratePlatform} />
@@ -138,7 +142,7 @@ const StaffShell = ({ activeSection, permissions, role }: StaffShellProps) => {
             {activeSection === 'reports' && permissions.canModeratePlatform && <StaffReportsSection />}
             {activeSection === 'appeals' && permissions.canModeratePlatform && <StaffAppealsSection />}
             {activeSection === 'tickets' && <StaffTicketsSection />}
-            {activeSection === 'users' && (
+            {activeSection === 'users' && permissions.canModeratePlatform && (
               <StaffUsersSection
                 canManageStaffRoles={permissions.canManageStaffRoles}
                 canModeratePlatform={permissions.canModeratePlatform}
@@ -205,7 +209,10 @@ export const StaffPage: FC = settingLayout(() => {
       navigate(`/staff/${defaultSection}`, { replace: true });
       return;
     }
-    if ((activeSection === 'reports' || activeSection === 'appeals') && !permissions.canModeratePlatform) {
+    if (
+      (activeSection === 'reports' || activeSection === 'appeals' || activeSection === 'users') &&
+      !permissions.canModeratePlatform
+    ) {
       navigate('/staff/tickets', { replace: true });
     }
   }, [section, activeSection, navigate, access, permissions.canModeratePlatform]);

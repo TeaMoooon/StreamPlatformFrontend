@@ -133,6 +133,8 @@ export const updateStaffTicket = async (
     escalateToReport?: boolean;
     escalateReason?: string;
     escalateDetails?: string;
+    /** Accused user id — required for escalate; must not be the ticket author. */
+    escalateTargetUserId?: number;
   }
 ) => {
   const result = await handleApiRequest<Record<string, unknown>>(`${apiLocal()}/api/staff/tickets/${id}`, {

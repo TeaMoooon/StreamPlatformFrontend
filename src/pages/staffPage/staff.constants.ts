@@ -19,6 +19,7 @@ export const getStaffNavItems = (canModeratePlatform = true): StaffNavItem[] =>
       title: 'Мут и бан',
       description: 'Найти человека и выдать наказание',
       path: '/staff/users',
+      requiresPlatformMod: true,
     },
     {
       value: 'reports' as const,

@@ -92,12 +92,16 @@ export const useStreamHub = ({ nickname, userData, authUserId = null }: UseStrea
     const streamerId = streamerIdRef.current;
     if (!nick) return;
 
-    hub.invoke('JoinStream', nick, userTokenRef.current).catch(console.error);
-    joinedNicknameRef.current = nick;
-
-    if (streamerId) {
-      hub.invoke('UpdateStreamStatus', streamerId).catch(console.error);
-    }
+    // Await JoinStream so ConnectionMap is ready before UpdateStreamStatus (hub gates on join).
+    hub
+      .invoke('JoinStream', nick, userTokenRef.current)
+      .then(() => {
+        joinedNicknameRef.current = nick;
+        if (streamerId) {
+          hub.invoke('UpdateStreamStatus', streamerId).catch(console.error);
+        }
+      })
+      .catch(console.error);
   };
 
   const ensureStatusPoll = (hub: signalR.HubConnection) => {

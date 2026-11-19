@@ -57,6 +57,7 @@ export const StaffTicketsSection = () => {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [reply, setReply] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [escalateTargetUserId, setEscalateTargetUserId] = useState('');
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -109,7 +110,7 @@ export const StaffTicketsSection = () => {
       <Box>
         <StyledDashboardSectionTitle>Вопросы в поддержку</StyledDashboardSectionTitle>
         <StyledDashboardSectionHint>
-          Баны здесь не выдают — для этого раздел «Мут и бан». Открытые дольше {STAFF_STALE_HOURS}ч подсвечены.
+          Здесь только ответы пользователям. Мут и бан — у Safety. Открытые дольше {STAFF_STALE_HOURS}ч подсвечены.
         </StyledDashboardSectionHint>
       </Box>
 
@@ -181,8 +182,15 @@ export const StaffTicketsSection = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
               <Chip size="small" label={active.status} sx={{ color: '#fff' }} />
               <Chip size="small" label={categoryLabel(active.category)} sx={{ color: '#fff' }} />
+              {active.assigneeNickname && (
+                <Chip
+                  size="small"
+                  label={`В работе: ${active.assigneeNickname}`}
+                  sx={{ color: '#cfc5ff', bgcolor: 'rgba(142,123,255,0.15)' }}
+                />
+              )}
               {active.escalatedReportId && (
-                <Chip size="small" label={`Жалоба #${active.escalatedReportId}`} sx={{ color: '#ffb74d' }} />
+                <Chip size="small" label={`Жалоба #${active.escalatedReportId} → Safety`} sx={{ color: '#ffb74d' }} />
               )}
             </Box>
             <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{active.subject}</Typography>
@@ -219,7 +227,7 @@ export const StaffTicketsSection = () => {
               fullWidth
             />
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
               <Button
                 size="small"
                 disabled={busyId === active.id || !reply.trim()}
@@ -257,24 +265,43 @@ export const StaffTicketsSection = () => {
               >
                 Сбросить ключ стрима
               </Button>
-              <Button
-                size="small"
-                disabled={busyId === active.id || Boolean(active.escalatedReportId)}
-                onClick={() =>
-                  run(active.id, () =>
-                    updateStaffTicket(active.id, {
-                      escalateToReport: true,
-                      escalateReason: 'other',
-                      escalateDetails: active.messages[0]?.body,
-                      assignToMe: true,
-                    })
-                  )
-                }
-                sx={{ textTransform: 'none', color: '#ff8a8a' }}
-              >
-                Это нарушение → в жалобы
-              </Button>
             </Box>
+
+            {!active.escalatedReportId && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'flex-start', mt: 1 }}>
+                <TextField
+                  label="ID нарушителя"
+                  value={escalateTargetUserId}
+                  onChange={(e) => setEscalateTargetUserId(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  size="small"
+                  sx={{ ...fieldSx, width: 160 }}
+                  helperText="Не автор тикета"
+                  FormHelperTextProps={{ sx: { color: 'rgba(255,255,255,0.4)' } }}
+                />
+                <Button
+                  size="small"
+                  disabled={
+                    busyId === active.id || !escalateTargetUserId || Number(escalateTargetUserId) === active.userId
+                  }
+                  onClick={() =>
+                    run(active.id, async () => {
+                      const result = await updateStaffTicket(active.id, {
+                        escalateToReport: true,
+                        escalateReason: 'other',
+                        escalateDetails: active.messages[0]?.body,
+                        escalateTargetUserId: Number(escalateTargetUserId),
+                        assignToMe: true,
+                      });
+                      if (result.success) setEscalateTargetUserId('');
+                      return result;
+                    })
+                  }
+                  sx={{ textTransform: 'none', color: '#ff8a8a', mt: 0.5 }}
+                >
+                  Это нарушение → в жалобы
+                </Button>
+              </Box>
+            )}
           </Box>
         ) : (
           <Box sx={panelSx}>

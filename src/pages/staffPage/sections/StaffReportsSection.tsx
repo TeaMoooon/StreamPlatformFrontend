@@ -295,6 +295,33 @@ export const StaffReportsSection = () => {
                 </Typography>
               )}
 
+              {(report.status === 'resolved' || report.status === 'rejected') && (
+                <Box
+                  sx={{
+                    p: 1.25,
+                    borderRadius: 1,
+                    bgcolor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.5,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                    Решение
+                    {report.assigneeNickname ? ` · ${report.assigneeNickname}` : ''}
+                    {report.resolvedAt ? ` · ${new Date(report.resolvedAt).toLocaleString()}` : ''}
+                  </Typography>
+                  {report.resolutionNote ? (
+                    <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap' }}>
+                      {report.resolutionNote}
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Без комментария</Typography>
+                  )}
+                </Box>
+              )}
+
               {(report.status === 'new' || report.status === 'in_progress') && (
                 <>
                   <TextField

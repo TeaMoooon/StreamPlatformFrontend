@@ -74,7 +74,8 @@ export const HeaderMenuAvatar = () => {
       ? [
           {
             authOnly: true,
-            href: '/staff/reports',
+            // /staff redirects: Safety→users, Support→tickets (not hard-coded reports).
+            href: '/staff',
             icon: GavelOutlinedIcon,
             value: 'Staff',
           },
